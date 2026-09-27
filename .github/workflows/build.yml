@@ -1,0 +1,38 @@
+name: Build e testes
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: turmalina_test
+          POSTGRES_USER: turmalina
+          POSTGRES_PASSWORD: turmalina
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U turmalina -d turmalina_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      TURMALINA_TEST_DB_URL: jdbc:postgresql://localhost:5432/turmalina_test
+      TURMALINA_TEST_DB_USER: turmalina
+      TURMALINA_TEST_DB_PASSWORD: turmalina
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - run: ./mvnw -B -Pintegracao verify
