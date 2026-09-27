@@ -1,4 +1,4 @@
-# TurmalinaPB — Expedições Científicas Subterrâneas
+# TurmalinaPB Expedições Científicas Subterrâneas
 
 Projeto de Programação para a Web 3 (IFPB), desenvolvido por Victor, Alan e Ícaro. O produto é um modelo Java com Jakarta Persistence, esquema PostgreSQL, consultas e relatório técnico.
 
