@@ -1,0 +1,49 @@
+name: pw3-expedicao
+
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: ${TURMALINA_DB_NAME:-turmalina}
+      POSTGRES_USER: ${TURMALINA_DB_USER:-turmalina}
+      POSTGRES_PASSWORD: ${TURMALINA_DB_PASSWORD:-turmalina}
+    ports:
+      - "127.0.0.1:${TURMALINA_DB_PORT:-5434}:5432"
+    volumes:
+      - dados-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  app:
+    build: .
+    profiles: ["app"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      TURMALINA_DB_URL: jdbc:postgresql://postgres:5432/${TURMALINA_DB_NAME:-turmalina}
+      TURMALINA_DB_USER: ${TURMALINA_DB_USER:-turmalina}
+      TURMALINA_DB_PASSWORD: ${TURMALINA_DB_PASSWORD:-turmalina}
+
+  postgres-test:
+    image: postgres:17
+    profiles: ["test"]
+    environment:
+      POSTGRES_DB: turmalina_test
+      POSTGRES_USER: turmalina
+      POSTGRES_PASSWORD: turmalina
+    ports:
+      - "127.0.0.1:5435:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U turmalina -d turmalina_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  dados-postgres:

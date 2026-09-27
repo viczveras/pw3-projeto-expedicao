@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="https://jakarta.ee/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd"
+             version="3.0">
+    <persistence-unit name="turmalinaPU" transaction-type="RESOURCE_LOCAL">
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+        <class>br.edu.ifpb.pweb3.turmalina.dominio.Caverna</class>
+        <class>br.edu.ifpb.pweb3.turmalina.dominio.Setor</class>
+        <class>br.edu.ifpb.pweb3.turmalina.dominio.Pessoa</class>
+        <class>br.edu.ifpb.pweb3.turmalina.dominio.Pesquisador</class>
+        <class>br.edu.ifpb.pweb3.turmalina.dominio.GuiaEspeleologia</class>
+        <class>br.edu.ifpb.pweb3.turmalina.dominio.valor.Localizacao</class>
+        <class>br.edu.ifpb.pweb3.turmalina.dominio.valor.Endereco</class>
+        <exclude-unlisted-classes>true</exclude-unlisted-classes>
+        <properties>
+            <property name="jakarta.persistence.jdbc.driver" value="org.postgresql.Driver"/>
+            <property name="jakarta.persistence.jdbc.url" value="jdbc:postgresql://localhost:5434/turmalina"/>
+            <property name="jakarta.persistence.jdbc.user" value="turmalina"/>
+            <property name="jakarta.persistence.jdbc.password" value="turmalina"/>
+            <property name="hibernate.hbm2ddl.auto" value="update"/>
+            <property name="hibernate.hbm2ddl.halt_on_error" value="true"/>
+            <property name="hibernate.physical_naming_strategy"
+                      value="org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy"/>
+            <property name="hibernate.jdbc.time_zone" value="UTC"/>
+            <property name="hibernate.show_sql" value="false"/>
+            <property name="hibernate.format_sql" value="true"/>
+        </properties>
+    </persistence-unit>
+</persistence>
