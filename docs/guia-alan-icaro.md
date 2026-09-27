@@ -1,0 +1,92 @@
+# Guia de continuidade — Alan e Ícaro
+
+## Repositórios e referência
+
+- Desenvolvimento: https://github.com/viczveras/pw3-projeto-expedicao
+- Referência técnica privada: https://github.com/viczveras/pw3-projeto-expedicao-setup
+- Snapshot de referência desta primeira entrega: commit `84b288071bab8af9867a789b1d681e8c9cf621c8` do setup.
+- Código de Alan: `organizacao-equipe/modulos/alan/codigo/` no setup.
+- Código de Ícaro: `organizacao-equipe/modulos/icaro/codigo/` no setup.
+- Código completo para consultar dependências: `organizacao-equipe/projeto-sanitizado/` no setup.
+- Roteiros, listas de arquivos e lacunas: `organizacao-equipe/modulos/<nome>/ROTEIRO.md`, `arquivos.json` e `01-analise-de-cobertura.md`.
+
+É necessário ter acesso ao setup para clonar a referência. O documento do professor define o escopo acadêmico; o setup é a fonte técnica acordada para nomes, contratos, mapeamentos e organização. Há falhas conhecidas na referência, que devem ser reproduzidas e corrigidas de forma explícita.
+
+## O que esta entrega de Victor inicia
+
+O planejamento cobre build, `EntidadeBase`, `Endereco`, `Localizacao`, `Caverna`, `Setor` e seus enums. Consulte o README e os arquivos presentes na branch para conferir o que já entrou em cada commit. Pessoas, herança, unidade de persistência, console e demonstração completa são posteriores. Não presumam que toda a pasta de Victor do setup já esteja disponível no repositório real.
+
+## Preparar o ambiente e as branches
+
+Cada integrante usa sua identidade verdadeira no Git e um clone próprio. Os comandos abaixo pressupõem que a branch ainda não existe localmente.
+
+```bash
+git clone https://github.com/viczveras/pw3-projeto-expedicao.git
+cd pw3-projeto-expedicao
+git fetch origin
+git switch -c feat/alan-planejamento origin/feat/victor-cadastros
+mvn -B verify
+```
+
+Ícaro troca apenas o comando de criação da branch:
+
+```bash
+git switch -c feat/icaro-operacao origin/feat/victor-cadastros
+```
+
+Enquanto a base de Victor não entrar na `main`, essas branches dependem dela. A integração deve acontecer primeiro para Victor e depois para os consumidores. Após a integração da base, novas branches devem partir de `origin/main`. Se alguém já tiver uma branch própria, não a recrie nem sobrescreva: incorpore a base com merge e confira o diff.
+
+Os patches numerados do setup removem comentários do projeto antigo; não adicionam as funcionalidades que faltam neste repositório. Para iniciar aqui, use os arquivos reais em `codigo/` como referência, preservando o pacote `br.edu.ifpb.pweb3.turmalina` e os caminhos `src/main/java` e `src/main/resources`.
+
+## Alan — sequência proposta
+
+1. Conferir no PDF os requisitos de expedição, plano, autorização e participação; desenhar seu recorte UML e listar os contratos com Victor/Ícaro.
+2. Incorporar seus enums e definir testes/cenários. O agregado `Expedicao` depende de `Pessoa` (Victor), `Coleta` e `RelatorioFinal` (Ícaro); a primeira entrega de Victor não fornece todas essas classes.
+3. Combinar uma entrega coordenada das entidades que têm referências circulares. Incorporar o conjunto mínimo compilável e revisar os vínculos bidirecionais em conjunto. Não publicar referências a classes inexistentes como se o build estivesse pronto.
+4. Verificar participantes, plano obrigatório/exclusivo, autorização vigente única e transições. Reproduzir a troca de plano rejeitada que desfaz o vínculo antigo e a remoção de setor usado em coleta antes de corrigi-las.
+5. Implementar projeções de expedição/participantes e downloads. Consolidar `orm.xml` e o SQL de criação somente quando houver entidades correspondentes. A limpeza global de large objects do setup precisa ser revista.
+6. Testar as regras no domínio e depois no PostgreSQL; atualizar o relatório técnico com a decisão efetivamente implementada.
+
+Commits possíveis: `feat(planejamento): adicionar estados da expedicao`; `feat(planejamento): integrar agregado e participantes`; `fix(planejamento): preservar vinculos apos troca rejeitada`. Criar cada commit quando a mudança correspondente existir e estiver verificada.
+
+## Ícaro — sequência proposta
+
+1. Conferir equipamentos, movimentações, coletas, amostras e relatório no PDF; desenhar seu recorte UML e conferir os vínculos com Alan/Victor.
+2. Começar por `Equipamento`, `TipoEquipamento`, `SituacaoOperacional` e os testes de invariantes. Esse conjunto depende da `EntidadeBase` comum e pode avançar antes de `Expedicao`.
+3. Preparar os demais enums e combinar a incorporação de `Coleta`/`RelatorioFinal` com Alan. A movimentação também exige `Expedicao` e `Pessoa`; coletas exigem `Pesquisador` de Victor.
+4. Incorporar amostras e movimentações quando as dependências estiverem disponíveis. Testar quantidade, datas e devolução; confirmar a decisão sobre equipamento aguardando calibração antes de alterar a regra do setup.
+5. Implementar consultas de disponibilidade, coletas/amostras e indicadores; enviar a Alan os trechos de ORM e os cenários esperados para integração.
+6. Incorporar a massa de exemplo e a demonstração depois da integração dos três módulos, e coletar evidências SQL dos seis casos exigidos.
+
+Commits possíveis: `feat(equipamentos): adicionar cadastro patrimonial`; `test(equipamentos): verificar regras de movimentacao`; `feat(coletas): incorporar amostras e consultas`. Indicadores adicionais são extras; priorizar os seis casos obrigatórios.
+
+## Contratos e integração
+
+| Arquivos/contrato | Responsável | Como coordenar |
+|---|---|---|
+| POM, configuração, EntidadeBase, Pessoa, Pesquisador, Caverna e Setor | Victor | Combinar alterações de assinatura e novas dependências |
+| Expedicao, participantes, segurança e `orm.xml` | Alan | Receber queries de Ícaro e integrar no arquivo único |
+| Coleta, Amostra, RelatorioFinal, equipamentos e demonstração | Ícaro | Integrar com os pontos de vínculo chamados por Expedicao |
+| Documentação de cada área | Autor da área | Atualizar o texto na mesma mudança da implementação |
+
+Cada pessoa deve incorporar apenas os arquivos da sua responsabilidade e os testes correspondentes. Não copiar `pom.xml`, `persistence.xml` ou `orm.xml` completos do setup sobre versões já alteradas pelos colegas. Em particular, o `persistence.xml` do setup lista todas as entidades e recria o esquema: só deve ser adaptado quando o modelo e o ambiente de teste estiverem preparados.
+
+Antes de cada commit:
+
+```bash
+git status --short
+git diff
+mvn -B verify
+git add -- caminho/do/arquivo1 caminho/do/arquivo2
+git diff --cached --check
+git commit -m "mensagem que descreve a mudanca real"
+git push -u origin NOME_DA_SUA_BRANCH
+```
+
+Substituir os caminhos e o nome da branch pelos próprios arquivos. O merge não garante compatibilidade de métodos nem valida regras de negócio; compilar e executar os cenários afetados na integração. Não esperar todas as funcionalidades ficarem prontas para integrar as primeiras entregas.
+
+## Para a apresentação
+
+Cada integrante deve explicar seus atributos, tipos, cardinalidades, proprietário das associações e estratégia de carregamento; mostrar um caso válido e um inválido; e relacionar a implementação ao PDF. O histórico registra a incorporação e os ajustes reais da referência, com as datas reais de trabalho. Não é necessário introduzir falhas intencionais para demonstrar desenvolvimento incremental.
+
+Referência dos testes: [guia oficial do JUnit 5.11.4](https://docs.junit.org/5.11.4/user-guide/).
