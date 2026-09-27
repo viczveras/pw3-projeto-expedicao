@@ -14,7 +14,7 @@
 
 ## O que a parte de Victor já fornece
 
-Na `main`: build, `EntidadeBase`, `Endereco`, `Localizacao`, `Caverna`, `Setor`, `Pessoa`, `Pesquisador`, `GuiaEspeleologia` e seus enums, com testes de domínio e de integração. Também a estrutura base: Maven Wrapper, `persistence.xml`, PostgreSQL via Docker Compose, a base `IntegracaoPostgres` para testes com banco e CI. Os construtores e nomes de colunas são os mesmos do setup, então as classes de vocês que referenciam pessoas, pesquisadores, cavernas e setores compilam sem adaptação. Console e demonstração completa são posteriores.
+Na `main`: build, `EntidadeBase`, `Endereco`, `Localizacao`, `Caverna`, `Setor`, `Pessoa`, `Pesquisador`, `GuiaEspeleologia` e seus enums, com testes de domínio e de integração. Também a estrutura base: Maven Wrapper, `persistence.xml`, PostgreSQL via Docker Compose, a base `IntegracaoPostgres` para testes com banco e CI. Os construtores e nomes de colunas são os mesmos do setup, então as classes de vocês que referenciam pessoas, pesquisadores, cavernas e setores compilam sem adaptação. Também estão prontos o [diagrama de classes completo](diagrama-classes.md), a execução automática do `pos-criacao.sql` nos testes e a configuração da demonstração (ver "Script pós-criação e demonstração"). Console e README final são posteriores.
 
 O cadastro já rejeita adicionar novamente o mesmo setor à mesma caverna, correção reproduzida e documentada em [validação de Victor](validacao-victor.md). Portanto, não substituam indiscriminadamente classes integradas pela versão mais antiga do setup. Divergências intencionais devem ser explicadas e testadas.
 
@@ -91,6 +91,11 @@ git switch -c feat/nucleo-expedicao origin/main
 Cada pessoa deve incorporar apenas os arquivos da sua responsabilidade e os testes correspondentes. Não copiar `pom.xml`, `persistence.xml` ou `orm.xml` completos do setup sobre versões já alteradas pelos colegas. O `persistence.xml` deste repositório lista apenas as entidades já incorporadas e atualiza o esquema sem apagá-lo; o do setup lista todas e recria o esquema. Ao incorporar uma entidade, acrescentem a linha `<class>` correspondente no mesmo commit e validem os mapeamentos com os testes de integração.
 
 Testes com banco: criem uma classe `*IT` própria por área (por exemplo `ExpedicaoIT`, `EquipamentoIT`, `ColetaIT`) que herde de `IntegracaoPostgres`, em `src/test/java/br/edu/ifpb/pweb3/turmalina/app/`. A base cria e remove um esquema isolado e oferece `transacao(em -> ...)`, `exigirSqlState(erro, "23505")` e `tipoDaColuna(tabela, coluna)`. Usem `CavernaIT` e `PessoaIT` como exemplos. Não editem as classes `*IT` dos colegas: isso evita conflitos no merge.
+
+## Script pós-criação e demonstração
+
+- **Alan:** ao incorporar `src/main/resources/META-INF/sql/pos-criacao.sql`, não é preciso alterar nenhuma configuração. A base dos testes o executa automaticamente depois de criar as tabelas, dentro do esquema do teste, e qualquer erro no script derruba os testes. Corrijam antes a limpeza global de large objects (`lo_unlink` sem filtro). O script não roda no banco de desenvolvimento, que usa `update`.
+- **Ícaro:** a `Demonstracao` do setup cria a fábrica com `Configuracao.propriedadesDoAmbiente()`. No projeto real, troquem essa chamada por `Configuracao.propriedadesDaDemonstracao()`: ela recria o esquema, executa o script pós-criação e exibe o SQL e as estatísticas. Para executar: `./mvnw -B -q compile exec:java -Dexec.mainClass=br.edu.ifpb.pweb3.turmalina.app.Demonstracao`, somente em banco descartável.
 
 Antes de cada commit:
 

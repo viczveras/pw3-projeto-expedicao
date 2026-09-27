@@ -33,13 +33,16 @@ public abstract class IntegracaoPostgres {
     void iniciarBanco() throws SQLException {
         executarDdl("create schema " + esquema);
         esquemaCriado = true;
-        Map<String, Object> propriedades = new HashMap<>();
-        propriedades.put("jakarta.persistence.jdbc.url", URL);
+        Map<String, Object> propriedades = new HashMap<>(Configuracao.recriacaoDoEsquema(scriptPosCriacao()));
+        propriedades.put("jakarta.persistence.jdbc.url", URL + (URL.contains("?") ? "&" : "?") + "currentSchema=" + esquema);
         propriedades.put("jakarta.persistence.jdbc.user", USUARIO);
         propriedades.put("jakarta.persistence.jdbc.password", SENHA);
         propriedades.put("hibernate.default_schema", esquema);
-        propriedades.put("hibernate.hbm2ddl.auto", "create-drop");
         fabrica = Persistence.createEntityManagerFactory(Configuracao.UNIDADE_PERSISTENCIA, propriedades);
+    }
+
+    protected String scriptPosCriacao() {
+        return Configuracao.SCRIPT_POS_CRIACAO;
     }
 
     @AfterAll
