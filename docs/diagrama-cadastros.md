@@ -82,4 +82,4 @@ Todas as classes deste recorte já foram incorporadas. `Pessoa` é concreta (pod
 
 JOINED foi escolhida porque permite NOT NULL nos atributos das especializações, FK para qualquer pessoa (participação, movimentação) e FK específica para pesquisador (responsável pela coleta), e porque um novo tipo de pessoa vira uma nova tabela sem alterar as existentes. A justificativa completa entra no relatório técnico.
 
-O diagrama completo do domínio continua disponível em `docs/diagrama-classes.md` do setup. Este recorte não substitui o UML completo da entrega final.
+O diagrama completo do domínio está em [diagrama-classes.md](diagrama-classes.md). Este recorte fica como registro do planejamento inicial da parte de Victor.

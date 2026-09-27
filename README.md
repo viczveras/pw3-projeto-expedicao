@@ -72,7 +72,8 @@ Os aproximadamente 33% por integrante representam estimativa de esforço, não n
 ## Organização e desenvolvimento
 
 - [Guia para Alan e Ícaro](docs/guia-alan-icaro.md): uso do setup, dependências, etapas e fluxo Git.
-- [UML inicial dos cadastros](docs/diagrama-cadastros.md): desenho registrado antes da incorporação das classes nesta implementação.
+- [Diagrama de classes completo](docs/diagrama-classes.md): as 14 entidades, os 2 tipos incorporáveis, associações, cardinalidades, enums e unicidades.
+- [UML inicial dos cadastros](docs/diagrama-cadastros.md): desenho registrado antes da incorporação das classes de Victor.
 - [Verificações das entregas de Victor](docs/validacao-victor.md): resultados e ajuste reproduzido na referência.
 - `src/main/java/br/edu/ifpb/pweb3/turmalina/`: fontes incorporados durante o desenvolvimento.
 - `src/main/resources/META-INF/persistence.xml`: unidade `turmalinaPU`; cada entidade entra nela no mesmo commit em que é incorporada.
@@ -88,6 +89,6 @@ Cada etapa deve compilar e passar nas verificações disponíveis antes do commi
 1. Registrar o `orm.xml` de Alan na unidade de persistência e criar o perfil da demonstração, que recria o esquema e exibe o SQL gerado.
 2. Revisar a remoção de setores e sua interação com as futuras expedições/coletas; a remoção herdada da referência ainda não foi revisada nesta etapa.
 3. Integrar o console quando as consultas de Alan e Ícaro estiverem disponíveis.
-4. Consolidar o UML completo e o README final da entrega.
+4. Atualizar o README final da entrega.
 
 As funcionalidades completas presentes no setup não devem ser confundidas com o que já foi incorporado aqui. As lacunas identificadas na revisão do setup precisam de testes e correções durante a implementação.
