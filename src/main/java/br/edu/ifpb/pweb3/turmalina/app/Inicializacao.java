@@ -15,8 +15,10 @@ public final class Inicializacao {
              EntityManager em = fabrica.createEntityManager()) {
             Long cavernas = em.createQuery("select count(c) from Caverna c", Long.class).getSingleResult();
             Long setores = em.createQuery("select count(s) from Setor s", Long.class).getSingleResult();
+            Long pessoas = em.createQuery("select count(p) from Pessoa p", Long.class).getSingleResult();
             System.out.println("TurmalinaPB: conexao e mapeamentos inicializados.");
-            System.out.printf("Cadastros existentes: %d caverna(s), %d setor(es).%n", cavernas, setores);
+            System.out.printf("Cadastros existentes: %d caverna(s), %d setor(es), %d pessoa(s).%n",
+                    cavernas, setores, pessoas);
         }
     }
 }

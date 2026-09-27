@@ -10,6 +10,16 @@ Data: 27/09/2026. Referência: setup no commit `84b288071bab8af9867a789b1d681e8c
 | 2 | Identidade, Endereco, Localizacao, UF e datum | `mvn -B verify`: 18 testes aprovados |
 | 3 | Caverna, Setor, enums e correção de duplicidade | Teste de regressão reproduziu a falha no setup; `mvn -B verify`: 24 testes aprovados após a correção |
 | 4 | Estrutura base: Maven Wrapper, `persistence.xml`, `Configuracao`, `Inicializacao`, Docker Compose, Dockerfile e CI | `./mvnw -B -Pintegracao verify`: 27 testes sem banco e 5 de integração aprovados; `docker compose run --rm --build app` e `./mvnw compile exec:java` conectaram ao PostgreSQL 17 |
+| 5 | Pessoa, Pesquisador, GuiaEspeleologia, Titulacao e NivelCertificacao (herança JOINED) | `./mvnw -B verify`: 42 testes aprovados |
+| 6 | Testes de integração de pessoas, base comum `IntegracaoPostgres` e correção do rollback dos testes | Falha forçada em `EntidadeBase.equals` travou a suíte antes da correção e passou a falhar em 10 s depois dela; `./mvnw -B -Pintegracao verify`: 42 + 13 testes aprovados |
+
+## Ajuste real encontrado nos testes de integração
+
+Para confirmar que o teste de igualdade entre proxy e subtipo detecta um erro de verdade, `EntidadeBase.equals` foi alterado temporariamente para comparar `getClass()`. O teste falhou como esperado: o proxy devolvido por `getReference(Pessoa.class, id)` é da classe `Pessoa$HibernateProxy`, diferente de `Pesquisador`. Porém a suíte não terminou: ficou parada por mais de 5 minutos.
+
+Causa: o auxiliar `transacao` só desfazia a transação em `RuntimeException`. Uma asserção que falha lança `AssertionError`, então a transação ficava aberta, segurando bloqueios na tabela `pessoa`, e a remoção das tabelas ao final (`create-drop`) esperava indefinidamente. Qualquer teste de integração que falhasse travaria o build local e o CI em vez de relatar a falha.
+
+O ajuste move o rollback para um bloco `finally`, executado para qualquer erro. Com a mesma alteração forçada, a suíte passou a falhar em 10 segundos, apontando o teste. `EntidadeBase` foi restaurada e a suíte completa foi executada novamente.
 
 ## Ajuste real encontrado na referência
 
@@ -24,10 +34,12 @@ O ajuste rejeita a repetição antes de modificar o vínculo. A comparação usa
 - Localizacao: quatro extremos válidos, quatro coordenadas fora do limite, igualdade com escalas decimais diferentes, datum e campos obrigatórios.
 - Endereco: CEP normalizado com zero inicial, tamanho inválido, ausência de CEP e igualdade/diferença de complementos.
 - Caverna/Setor: vínculo dos dois lados, rejeição de transferência, proteção da coleção, inspeção, identidade de setores transientes e rejeição de inclusão duplicada.
+- Pessoa/Pesquisador/GuiaEspeleologia: CPF normalizado e com 11 dígitos, e-mail sem espaços e em minúsculas, campos obrigatórios, situação ativa, validade da certificação inclusive no último dia, renovação e contagem de expedições concluídas.
 - Configuracao: sem variáveis usa os padrões da unidade; ignora variáveis vazias ou não relacionadas; sobrescreve apenas URL, usuário e senha.
 - Persistência (PostgreSQL): gravação em cascata de caverna e setor com valores incorporados, carregamento sob demanda dos setores, violação de unicidade do código ambiental (SQLSTATE 23505), violação da restrição de profundidade (23514) e remoção de setor órfão sem apagar a caverna.
+- Pessoas (PostgreSQL): cada tipo gravado na própria tabela com `tipo_pessoa` (PESSOA, PESQUISADOR, GUIA) e endereço na tabela `pessoa`; `find(Pessoa.class, id)` e `type(p)` devolvem o subtipo concreto; proxy da raiz igual ao subtipo carregado; unicidade de CPF (mesmo com formatação diferente), e-mail (mesmo com maiúsculas) e registro institucional (23505); bolsa negativa rejeitada pela restrição da tabela `pesquisador` (23514); colunas `boolean`, `date` e `numeric` nativas.
 
-Os erros de SQL registrados no log dos testes de integração são esperados: vêm dos cenários que verificam se o banco rejeita dados inválidos. Proxies de entidade, concorrência e a interação da remoção de setores com expedições e coletas ainda não foram testados. Esta entrega não implementa a área de Alan ou Ícaro e não executa os seis casos de consulta do projeto completo.
+Os erros de SQL registrados no log dos testes de integração são esperados: vêm dos cenários que verificam se o banco rejeita dados inválidos. Concorrência e a interação da remoção de setores com expedições e coletas ainda não foram testadas. O CPF é validado apenas pela quantidade de dígitos, sem dígitos verificadores, como na referência. Esta entrega não implementa a área de Alan ou Ícaro e não executa os seis casos de consulta do projeto completo.
 
 Para repetir a verificação, na raiz do repositório:
 

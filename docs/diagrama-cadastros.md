@@ -78,4 +78,8 @@ classDiagram
 
 Decisões herdadas da referência: identidade numérica gerada com IDENTITY; `Localizacao` e `Endereco` incorporados sem tabela própria; enumerações persistidas como STRING; `Setor` proprietário da FK `caverna_id`; cascata e orphanRemoval de Caverna para Setor; herança JOINED planejada para pessoas.
 
-`Pessoa`, suas especializações e sua integração com Alan/Ícaro ficam para uma entrega posterior. O diagrama completo do domínio continua disponível em `docs/diagrama-classes.md` do setup. Este recorte não substitui o UML completo da entrega final.
+Todas as classes deste recorte já foram incorporadas. `Pessoa` é concreta (pode ser cadastrada sem especialização) e usa herança JOINED com a coluna discriminadora `tipo_pessoa`; `Pesquisador` e `GuiaEspeleologia` ficam em tabelas próprias cuja chave `pessoa_id` é também FK para `pessoa`. CPF, e-mail, registro institucional e número de credenciamento são únicos.
+
+JOINED foi escolhida porque permite NOT NULL nos atributos das especializações, FK para qualquer pessoa (participação, movimentação) e FK específica para pesquisador (responsável pela coleta), e porque um novo tipo de pessoa vira uma nova tabela sem alterar as existentes. A justificativa completa entra no relatório técnico.
+
+O diagrama completo do domínio continua disponível em `docs/diagrama-classes.md` do setup. Este recorte não substitui o UML completo da entrega final.
