@@ -14,7 +14,7 @@
 
 ## O que esta entrega de Victor inicia
 
-Esta entrega fornece build, `EntidadeBase`, `Endereco`, `Localizacao`, `Caverna`, `Setor` e seus enums, com testes de domínio. Consulte o README e os arquivos presentes na branch para conferir o que já entrou em cada commit. Pessoas, herança, unidade de persistência, console e demonstração completa são posteriores. Não presumam que toda a pasta de Victor do setup já esteja disponível no repositório real.
+Esta entrega fornece build, `EntidadeBase`, `Endereco`, `Localizacao`, `Caverna`, `Setor` e seus enums, com testes de domínio. Também fornece a estrutura base: Maven Wrapper, `persistence.xml`, PostgreSQL via Docker Compose, testes de integração e CI. Consulte o README e os arquivos presentes na branch para conferir o que já entrou em cada commit. Pessoas, herança, console e demonstração completa são posteriores. Não presumam que toda a pasta de Victor do setup já esteja disponível no repositório real.
 
 O cadastro já rejeita adicionar novamente o mesmo setor à mesma caverna, correção reproduzida e documentada em [validação de Victor](validacao-victor.md). Portanto, não substituam indiscriminadamente classes integradas pela versão mais antiga do setup. Divergências intencionais devem ser explicadas e testadas.
 
@@ -27,8 +27,10 @@ git clone https://github.com/viczveras/pw3-projeto-expedicao.git
 cd pw3-projeto-expedicao
 git fetch origin
 git switch -c feat/alan-planejamento origin/feat/victor-cadastros
-mvn -B verify
+./mvnw -B verify
 ```
+
+No PowerShell, use `.\mvnw.cmd`. Não é preciso instalar o Maven; basta o JDK 21 e, para os testes com banco, o Docker.
 
 Ícaro troca apenas o comando de criação da branch:
 
@@ -71,14 +73,16 @@ Commits possíveis: `feat(equipamentos): adicionar cadastro patrimonial`; `test(
 | Coleta, Amostra, RelatorioFinal, equipamentos e demonstração | Ícaro | Integrar com os pontos de vínculo chamados por Expedicao |
 | Documentação de cada área | Autor da área | Atualizar o texto na mesma mudança da implementação |
 
-Cada pessoa deve incorporar apenas os arquivos da sua responsabilidade e os testes correspondentes. Não copiar `pom.xml`, `persistence.xml` ou `orm.xml` completos do setup sobre versões já alteradas pelos colegas. Em particular, o `persistence.xml` do setup lista todas as entidades e recria o esquema: só deve ser adaptado quando o modelo e o ambiente de teste estiverem preparados.
+Cada pessoa deve incorporar apenas os arquivos da sua responsabilidade e os testes correspondentes. Não copiar `pom.xml`, `persistence.xml` ou `orm.xml` completos do setup sobre versões já alteradas pelos colegas. O `persistence.xml` deste repositório lista apenas as entidades já incorporadas e atualiza o esquema sem apagá-lo; o do setup lista todas e recria o esquema. Ao incorporar uma entidade, acrescentem a linha `<class>` correspondente no mesmo commit e validem os mapeamentos com os testes de integração.
 
 Antes de cada commit:
 
 ```bash
 git status --short
 git diff
-mvn -B verify
+./mvnw -B verify
+docker compose --profile test up -d --wait postgres-test
+./mvnw -B -Pintegracao verify
 git add -- caminho/do/arquivo1 caminho/do/arquivo2
 git diff --cached --check
 git commit -m "mensagem que descreve a mudanca real"
