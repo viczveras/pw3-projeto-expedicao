@@ -6,7 +6,7 @@ Projeto de Programação para a Web 3 (IFPB), desenvolvido por Victor, Alan e Í
 
 O [repositório setup](https://github.com/viczveras/pw3-projeto-expedicao-setup) é a referência técnica da equipe. O documento do professor, a divisão de responsabilidades e o código sanitizado estão nesse repositório, cujo acesso é privado. Esta implementação incorpora a referência gradativamente, com verificações e ajustes registrados em commits reais.
 
-Esta primeira etapa contém o planejamento e a configuração de build. Os modelos serão incorporados nas próximas entregas da branch `feat/victor-cadastros`. Ainda não há aplicação executável, unidade de persistência ou consultas de negócio.
+Esta etapa contém o planejamento, a configuração de build, `EntidadeBase`, `Localizacao`, `Endereco` e os enums de datum/UF. Os tipos comuns foram incorporados do setup e receberam testes de domínio. Ainda não há aplicação executável, unidade de persistência ou consultas de negócio.
 
 ## Ambiente
 
@@ -21,7 +21,7 @@ Na raiz deste repositório:
 mvn -B verify
 ```
 
-Nesta etapa inicial, o comando valida o build sem executar testes de domínio, pois eles ainda serão implementados. Banco de dados não é necessário para compilar. A configuração e os testes de integração com PostgreSQL serão adicionados numa etapa posterior.
+O comando compila e executa os testes de domínio sem precisar de banco. Eles verificam limites de coordenadas, igualdade por valor e normalização do CEP. A configuração e os testes de integração com PostgreSQL serão adicionados numa etapa posterior.
 
 ## Divisão de trabalho
 
@@ -40,15 +40,14 @@ Os aproximadamente 33% por integrante representam estimativa de esforço, não n
 - `src/main/java/br/edu/ifpb/pweb3/turmalina/`: fontes incorporados durante o desenvolvimento.
 - `src/test/java/br/edu/ifpb/pweb3/turmalina/`: testes dos comportamentos implementados.
 
-As pastas `src/` passam a existir quando suas primeiras classes forem adicionadas. No repositório real, editar os fontes nesses caminhos; não criar cópias por integrante dentro da aplicação.
+No repositório real, editar os fontes nesses caminhos; não criar cópias por integrante dentro da aplicação.
 
 Cada etapa deve compilar e passar nas verificações disponíveis antes do commit. Integrações ocorrem por pull request; atualizar a branch com as dependências necessárias antes de começar uma funcionalidade que as consome.
 
 ## Entregas seguintes de Victor
 
-1. Incorporar a identidade das entidades e os valores `Localizacao` e `Endereco`, com testes.
-2. Incorporar `Caverna` e `Setor`, verificando os vínculos e as invariantes.
-3. Implementar pessoas, pesquisadores e guias com herança JOINED.
-4. Configurar persistência, testar os mapeamentos no PostgreSQL e integrar o console quando as consultas estiverem disponíveis.
+1. Incorporar `Caverna` e `Setor`, verificando os vínculos e as invariantes.
+2. Implementar pessoas, pesquisadores e guias com herança JOINED.
+3. Configurar persistência, testar os mapeamentos no PostgreSQL e integrar o console quando as consultas estiverem disponíveis.
 
 As funcionalidades completas presentes no setup não devem ser confundidas com o que já foi incorporado aqui. As lacunas identificadas na revisão do setup precisam de testes e correções durante a implementação.
