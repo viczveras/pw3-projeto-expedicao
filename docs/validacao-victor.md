@@ -12,6 +12,14 @@ Data: 27/09/2026. Referência: setup no commit `84b288071bab8af9867a789b1d681e8c
 | 4 | Estrutura base: Maven Wrapper, `persistence.xml`, `Configuracao`, `Inicializacao`, Docker Compose, Dockerfile e CI | `./mvnw -B -Pintegracao verify`: 27 testes sem banco e 5 de integração aprovados; `docker compose run --rm --build app` e `./mvnw compile exec:java` conectaram ao PostgreSQL 17 |
 | 5 | Pessoa, Pesquisador, GuiaEspeleologia, Titulacao e NivelCertificacao (herança JOINED) | `./mvnw -B verify`: 42 testes aprovados |
 | 6 | Testes de integração de pessoas, base comum `IntegracaoPostgres` e correção do rollback dos testes | Falha forçada em `EntidadeBase.equals` travou a suíte antes da correção e passou a falhar em 10 s depois dela; `./mvnw -B -Pintegracao verify`: 42 + 13 testes aprovados |
+| 7 | Diagrama de classes completo, registrado antes das partes de Alan e Ícaro | Atributos, tipos e valores dos enums das 16 classes conferidos por script contra o código de referência do setup |
+| 8 | Recriação do esquema com script pós-criação (testes e demonstração) e configuração da demonstração | Sem `currentSchema`, o script falhou com `relation "setor" does not exist`; com o ajuste, `./mvnw -B -Pintegracao verify`: 45 + 15 testes aprovados |
+
+## Script pós-criação nos testes de integração
+
+O `pos-criacao.sql` do setup (arquivo de Alan) cria regras que o Hibernate não gera, como o índice único parcial de autorização vigente. Ele usa nomes de tabela sem esquema. Nos testes, as tabelas ficam num esquema isolado (`hibernate.default_schema`), mas essa propriedade só qualifica o DDL do Hibernate, não os comandos do script: o script procurava as tabelas no esquema `public` e falhava.
+
+`IntegracaoPostgres` passou a conectar com `currentSchema` igual ao esquema do teste, e `Configuracao.recriacaoDoEsquema` inclui o script quando o arquivo existe no classpath. A verificação usa um script apenas de teste (`src/test/resources/sql/teste-pos-criacao.sql`), com um índice único parcial em `setor`, em `ScriptPosCriacaoIT`. Com `currentSchema` removido de propósito, a criação falhou com `relation "setor" does not exist`; com ele, o índice aparece no esquema do teste e o banco rejeita a violação (23505). O script real de Alan passa a ser executado automaticamente quando for incorporado, sem mudança nos arquivos de Victor.
 
 ## Ajuste real encontrado nos testes de integração
 
@@ -35,7 +43,7 @@ O ajuste rejeita a repetição antes de modificar o vínculo. A comparação usa
 - Endereco: CEP normalizado com zero inicial, tamanho inválido, ausência de CEP e igualdade/diferença de complementos.
 - Caverna/Setor: vínculo dos dois lados, rejeição de transferência, proteção da coleção, inspeção, identidade de setores transientes e rejeição de inclusão duplicada.
 - Pessoa/Pesquisador/GuiaEspeleologia: CPF normalizado e com 11 dígitos, e-mail sem espaços e em minúsculas, campos obrigatórios, situação ativa, validade da certificação inclusive no último dia, renovação e contagem de expedições concluídas.
-- Configuracao: sem variáveis usa os padrões da unidade; ignora variáveis vazias ou não relacionadas; sobrescreve apenas URL, usuário e senha.
+- Configuracao: sem variáveis usa os padrões da unidade; ignora variáveis vazias ou não relacionadas; sobrescreve apenas URL, usuário e senha; recriação do esquema inclui o script só quando ele existe; demonstração recria o esquema e ativa SQL, formatação e estatísticas.
 - Persistência (PostgreSQL): gravação em cascata de caverna e setor com valores incorporados, carregamento sob demanda dos setores, violação de unicidade do código ambiental (SQLSTATE 23505), violação da restrição de profundidade (23514) e remoção de setor órfão sem apagar a caverna.
 - Pessoas (PostgreSQL): cada tipo gravado na própria tabela com `tipo_pessoa` (PESSOA, PESQUISADOR, GUIA) e endereço na tabela `pessoa`; `find(Pessoa.class, id)` e `type(p)` devolvem o subtipo concreto; proxy da raiz igual ao subtipo carregado; unicidade de CPF (mesmo com formatação diferente), e-mail (mesmo com maiúsculas) e registro institucional (23505); bolsa negativa rejeitada pela restrição da tabela `pesquisador` (23514); colunas `boolean`, `date` e `numeric` nativas.
 

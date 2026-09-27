@@ -6,12 +6,32 @@ import java.util.Map;
 final class Configuracao {
 
     static final String UNIDADE_PERSISTENCIA = "turmalinaPU";
+    static final String SCRIPT_POS_CRIACAO = "META-INF/sql/pos-criacao.sql";
 
     private Configuracao() {
     }
 
     static Map<String, Object> propriedadesDoAmbiente() {
         return propriedadesDoAmbiente(System.getenv());
+    }
+
+    static Map<String, Object> propriedadesDaDemonstracao() {
+        Map<String, Object> propriedades = propriedadesDoAmbiente();
+        propriedades.putAll(recriacaoDoEsquema(SCRIPT_POS_CRIACAO));
+        propriedades.put("hibernate.show_sql", "true");
+        propriedades.put("hibernate.format_sql", "true");
+        propriedades.put("hibernate.use_sql_comments", "true");
+        propriedades.put("hibernate.generate_statistics", "true");
+        return propriedades;
+    }
+
+    static Map<String, Object> recriacaoDoEsquema(String script) {
+        Map<String, Object> propriedades = new HashMap<>();
+        propriedades.put("hibernate.hbm2ddl.auto", "create");
+        if (Configuracao.class.getClassLoader().getResource(script) != null) {
+            propriedades.put("jakarta.persistence.sql-load-script-source", script);
+        }
+        return propriedades;
     }
 
     static Map<String, Object> propriedadesDoAmbiente(Map<String, String> ambiente) {
