@@ -225,5 +225,4 @@ No máximo uma autorização `VIGENTE` por expedição: índice único parcial c
 
 > Observação: Expedicao → Setor está como `0..*` porque a expedição pode ser planejada antes da
 > definição dos setores. Os setores precisam pertencer à caverna da expedição; essa regra é
-> verificada em `Expedicao.abrangerSetor`. As dúvidas de modelagem enviadas ao professor estão em
-> `docs/duvidas-professor.md` do repositório setup.
+> verificada em `Expedicao.abrangerSetor`.
