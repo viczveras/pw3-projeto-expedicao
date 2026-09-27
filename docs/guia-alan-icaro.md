@@ -12,9 +12,9 @@
 
 É necessário ter acesso ao setup para clonar a referência. O documento do professor define o escopo acadêmico; o setup é a fonte técnica acordada para nomes, contratos, mapeamentos e organização. Há falhas conhecidas na referência, que devem ser reproduzidas e corrigidas de forma explícita.
 
-## O que esta entrega de Victor inicia
+## O que a parte de Victor já fornece
 
-Esta entrega fornece build, `EntidadeBase`, `Endereco`, `Localizacao`, `Caverna`, `Setor` e seus enums, com testes de domínio. Também fornece a estrutura base: Maven Wrapper, `persistence.xml`, PostgreSQL via Docker Compose, testes de integração e CI. Consulte o README e os arquivos presentes na branch para conferir o que já entrou em cada commit. Pessoas, herança, console e demonstração completa são posteriores. Não presumam que toda a pasta de Victor do setup já esteja disponível no repositório real.
+Na `main`: build, `EntidadeBase`, `Endereco`, `Localizacao`, `Caverna`, `Setor`, `Pessoa`, `Pesquisador`, `GuiaEspeleologia` e seus enums, com testes de domínio e de integração. Também a estrutura base: Maven Wrapper, `persistence.xml`, PostgreSQL via Docker Compose, a base `IntegracaoPostgres` para testes com banco e CI. Os construtores e nomes de colunas são os mesmos do setup, então as classes de vocês que referenciam pessoas, pesquisadores, cavernas e setores compilam sem adaptação. Console e demonstração completa são posteriores.
 
 O cadastro já rejeita adicionar novamente o mesmo setor à mesma caverna, correção reproduzida e documentada em [validação de Victor](validacao-victor.md). Portanto, não substituam indiscriminadamente classes integradas pela versão mais antiga do setup. Divergências intencionais devem ser explicadas e testadas.
 
@@ -26,7 +26,7 @@ Cada integrante usa sua identidade verdadeira no Git e um clone próprio. Os com
 git clone https://github.com/viczveras/pw3-projeto-expedicao.git
 cd pw3-projeto-expedicao
 git fetch origin
-git switch -c feat/alan-planejamento origin/feat/victor-cadastros
+git switch -c feat/alan-planejamento origin/main
 ./mvnw -B verify
 ```
 
@@ -35,18 +35,18 @@ No PowerShell, use `.\mvnw.cmd`. Não é preciso instalar o Maven; basta o JDK 2
 Ícaro troca apenas o comando de criação da branch:
 
 ```bash
-git switch -c feat/icaro-operacao origin/feat/victor-cadastros
+git switch -c feat/icaro-operacao origin/main
 ```
 
-Enquanto a base de Victor não entrar na `main`, essas branches dependem dela. A integração deve acontecer primeiro para Victor e depois para os consumidores. Após a integração da base, novas branches devem partir de `origin/main`. Se alguém já tiver uma branch própria, não a recrie nem sobrescreva: incorpore a base com merge e confira o diff.
+Toda branch nova parte de `origin/main`. Se alguém já tiver uma branch própria, não a recrie nem sobrescreva: incorpore a `main` com merge e confira o diff.
 
 Os patches numerados do setup removem comentários do projeto antigo; não adicionam as funcionalidades que faltam neste repositório. Para iniciar aqui, use os arquivos reais em `codigo/` como referência, preservando o pacote `br.edu.ifpb.pweb3.turmalina` e os caminhos `src/main/java` e `src/main/resources`.
 
 ## Alan — sequência proposta
 
 1. Conferir no PDF os requisitos de expedição, plano, autorização e participação; desenhar seu recorte UML e listar os contratos com Victor/Ícaro.
-2. Incorporar seus enums e definir testes/cenários. O agregado `Expedicao` depende de `Pessoa` (Victor), `Coleta` e `RelatorioFinal` (Ícaro); a primeira entrega de Victor não fornece todas essas classes.
-3. Combinar uma entrega coordenada das entidades que têm referências circulares. Incorporar o conjunto mínimo compilável e revisar os vínculos bidirecionais em conjunto. Não publicar referências a classes inexistentes como se o build estivesse pronto.
+2. Incorporar seus enums e definir testes/cenários. O agregado `Expedicao` depende de `Pessoa` e `Setor` (Victor, já na `main`), `Coleta` e `RelatorioFinal` (Ícaro).
+3. Incorporar o núcleo acoplado junto com Ícaro, na branch compartilhada descrita abaixo. Não publicar referências a classes inexistentes como se o build estivesse pronto.
 4. Verificar participantes, plano obrigatório/exclusivo, autorização vigente única e transições. Reproduzir a troca de plano rejeitada que desfaz o vínculo antigo e a remoção de setor usado em coleta antes de corrigi-las.
 5. Implementar projeções de expedição/participantes e downloads. Consolidar `orm.xml` e o SQL de criação somente quando houver entidades correspondentes. A limpeza global de large objects do setup precisa ser revista.
 6. Testar as regras no domínio e depois no PostgreSQL; atualizar o relatório técnico com a decisão efetivamente implementada.
@@ -57,12 +57,27 @@ Commits possíveis: `feat(planejamento): adicionar estados da expedicao`; `feat(
 
 1. Conferir equipamentos, movimentações, coletas, amostras e relatório no PDF; desenhar seu recorte UML e conferir os vínculos com Alan/Victor.
 2. Começar por `Equipamento`, `TipoEquipamento`, `SituacaoOperacional` e os testes de invariantes. Esse conjunto depende da `EntidadeBase` comum e pode avançar antes de `Expedicao`.
-3. Preparar os demais enums e combinar a incorporação de `Coleta`/`RelatorioFinal` com Alan. A movimentação também exige `Expedicao` e `Pessoa`; coletas exigem `Pesquisador` de Victor.
+3. Preparar os demais enums e incorporar `Coleta`, `Amostra`, `RelatorioFinal` e `MovimentacaoEquipamento` junto com Alan, na branch compartilhada descrita abaixo. `Pessoa` e `Pesquisador` já estão na `main`.
 4. Incorporar amostras e movimentações quando as dependências estiverem disponíveis. Testar quantidade, datas e devolução; confirmar a decisão sobre equipamento aguardando calibração antes de alterar a regra do setup.
 5. Implementar consultas de disponibilidade, coletas/amostras e indicadores; enviar a Alan os trechos de ORM e os cenários esperados para integração.
 6. Incorporar a massa de exemplo e a demonstração depois da integração dos três módulos, e coletar evidências SQL dos seis casos exigidos.
 
 Commits possíveis: `feat(equipamentos): adicionar cadastro patrimonial`; `test(equipamentos): verificar regras de movimentacao`; `feat(coletas): incorporar amostras e consultas`. Indicadores adicionais são extras; priorizar os seis casos obrigatórios.
+
+## Núcleo acoplado: Alan e Ícaro juntos
+
+`Expedicao` referencia `Coleta` e `RelatorioFinal`; `Coleta`, `RelatorioFinal` e `MovimentacaoEquipamento` referenciam `Expedicao`. Nenhum dos dois lados compila sozinho. Por isso essas classes entram numa branch única, de preferência numa sessão em que os dois trabalham juntos:
+
+```bash
+git switch -c feat/nucleo-expedicao origin/main
+```
+
+- Alan faz os commits de `Expedicao`, `PlanoSeguranca`, `AutorizacaoAmbiental`, `Participacao` e seus enums.
+- Ícaro faz os commits de `Coleta`, `Amostra`, `RelatorioFinal`, `MovimentacaoEquipamento` e seus enums.
+- Cada um faz `git pull` antes de começar e `git push` logo após cada commit, para o outro receber as classes de que depende.
+- O PR para `main` só é aberto quando `./mvnw -B -Pintegracao verify` passar com o núcleo completo.
+
+`Equipamento` e as classes que não dependem do núcleo podem continuar nas branches individuais.
 
 ## Contratos e integração
 
@@ -74,6 +89,8 @@ Commits possíveis: `feat(equipamentos): adicionar cadastro patrimonial`; `test(
 | Documentação de cada área | Autor da área | Atualizar o texto na mesma mudança da implementação |
 
 Cada pessoa deve incorporar apenas os arquivos da sua responsabilidade e os testes correspondentes. Não copiar `pom.xml`, `persistence.xml` ou `orm.xml` completos do setup sobre versões já alteradas pelos colegas. O `persistence.xml` deste repositório lista apenas as entidades já incorporadas e atualiza o esquema sem apagá-lo; o do setup lista todas e recria o esquema. Ao incorporar uma entidade, acrescentem a linha `<class>` correspondente no mesmo commit e validem os mapeamentos com os testes de integração.
+
+Testes com banco: criem uma classe `*IT` própria por área (por exemplo `ExpedicaoIT`, `EquipamentoIT`, `ColetaIT`) que herde de `IntegracaoPostgres`, em `src/test/java/br/edu/ifpb/pweb3/turmalina/app/`. A base cria e remove um esquema isolado e oferece `transacao(em -> ...)`, `exigirSqlState(erro, "23505")` e `tipoDaColuna(tabela, coluna)`. Usem `CavernaIT` e `PessoaIT` como exemplos. Não editem as classes `*IT` dos colegas: isso evita conflitos no merge.
 
 Antes de cada commit:
 
