@@ -14,7 +14,9 @@
 
 ## O que esta entrega de Victor inicia
 
-O planejamento cobre build, `EntidadeBase`, `Endereco`, `Localizacao`, `Caverna`, `Setor` e seus enums. Consulte o README e os arquivos presentes na branch para conferir o que já entrou em cada commit. Pessoas, herança, unidade de persistência, console e demonstração completa são posteriores. Não presumam que toda a pasta de Victor do setup já esteja disponível no repositório real.
+Esta entrega fornece build, `EntidadeBase`, `Endereco`, `Localizacao`, `Caverna`, `Setor` e seus enums, com testes de domínio. Consulte o README e os arquivos presentes na branch para conferir o que já entrou em cada commit. Pessoas, herança, unidade de persistência, console e demonstração completa são posteriores. Não presumam que toda a pasta de Victor do setup já esteja disponível no repositório real.
+
+O cadastro já rejeita adicionar novamente o mesmo setor à mesma caverna, correção reproduzida e documentada em [validação de Victor](validacao-victor.md). Portanto, não substituam indiscriminadamente classes integradas pela versão mais antiga do setup. Divergências intencionais devem ser explicadas e testadas.
 
 ## Preparar o ambiente e as branches
 
@@ -84,6 +86,8 @@ git push -u origin NOME_DA_SUA_BRANCH
 ```
 
 Substituir os caminhos e o nome da branch pelos próprios arquivos. O merge não garante compatibilidade de métodos nem valida regras de negócio; compilar e executar os cenários afetados na integração. Não esperar todas as funcionalidades ficarem prontas para integrar as primeiras entregas.
+
+Já existe a proposta de README [PR #1](https://github.com/viczveras/pw3-projeto-expedicao/pull/1), na branch `copilot/create-readme`. Esta entrega não altera essa proposta. Ao integrar os READMEs, preservar tanto a descrição dos requisitos quanto o estado real da implementação; não declarar como prontas as funcionalidades ainda ausentes.
 
 ## Para a apresentação
 
