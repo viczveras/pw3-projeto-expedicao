@@ -17,6 +17,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -202,6 +203,51 @@ class ExpedicaoTest {
     }
 
     @Test
+    void trocaOPlanoPorOutroAindaSemExpedicao() {
+        PlanoSeguranca antigo = criarPlano();
+        PlanoSeguranca novo = criarPlano();
+        Expedicao expedicao = criarExpedicao(criarCaverna(), antigo, 5);
+
+        expedicao.definirPlanoSeguranca(novo);
+
+        assertSame(novo, expedicao.getPlanoSeguranca());
+        assertSame(expedicao, novo.getExpedicao());
+        assertNull(antigo.getExpedicao());
+    }
+
+    @Test
+    void trocaDePlanoRejeitadaPreservaOsDoisVinculos() {
+        PlanoSeguranca planoDaPrimeira = criarPlano();
+        PlanoSeguranca planoDaSegunda = criarPlano();
+        Expedicao primeira = criarExpedicao(criarCaverna(), planoDaPrimeira, 5);
+        Expedicao segunda = criarExpedicao(criarCaverna(), planoDaSegunda, 5);
+
+        assertThrows(IllegalStateException.class, () -> primeira.definirPlanoSeguranca(planoDaSegunda));
+
+        assertSame(planoDaPrimeira, primeira.getPlanoSeguranca());
+        assertSame(primeira, planoDaPrimeira.getExpedicao());
+        assertSame(planoDaSegunda, segunda.getPlanoSeguranca());
+        assertSame(segunda, planoDaSegunda.getExpedicao());
+    }
+
+    @Test
+    void trocaDeRelatorioRejeitadaPreservaOsDoisVinculos() {
+        Expedicao primeira = criarConcluida();
+        Expedicao segunda = criarConcluida();
+        RelatorioFinal relatorioDaPrimeira = criarRelatorio();
+        RelatorioFinal relatorioDaSegunda = criarRelatorio();
+        primeira.anexarRelatorioFinal(relatorioDaPrimeira);
+        segunda.anexarRelatorioFinal(relatorioDaSegunda);
+
+        assertThrows(IllegalStateException.class, () -> primeira.anexarRelatorioFinal(relatorioDaSegunda));
+        assertThrows(NullPointerException.class, () -> primeira.anexarRelatorioFinal(null));
+
+        assertSame(relatorioDaPrimeira, primeira.getRelatorioFinal().orElseThrow());
+        assertSame(primeira, relatorioDaPrimeira.getExpedicao());
+        assertSame(segunda, relatorioDaSegunda.getExpedicao());
+    }
+
+    @Test
     void impedeAlteracaoDasColecoesForaDoAgregado() {
         Expedicao expedicao = criarExpedicao(criarCaverna(), criarPlano(), 5);
 
@@ -227,6 +273,10 @@ class ExpedicaoTest {
     private PlanoSeguranca criarPlano() {
         return new PlanoSeguranca("Retornar pela galeria principal", "Portaria do parque", 120,
                 "83999990000", true);
+    }
+
+    private RelatorioFinal criarRelatorio() {
+        return new RelatorioFinal("Relatório final", "Resumo", HOJE, 42, new byte[]{1, 2, 3});
     }
 
     private AutorizacaoAmbiental criarAutorizacao(String numero, SituacaoAutorizacao situacao) {
