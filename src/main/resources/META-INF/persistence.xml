@@ -13,6 +13,14 @@
         <class>br.edu.ifpb.pweb3.turmalina.dominio.valor.Localizacao</class>
         <class>br.edu.ifpb.pweb3.turmalina.dominio.valor.Endereco</class>
         <class>br.edu.ifpb.pweb3.turmalina.dominio.Equipamento</class>
+        <class>br.edu.ifpb.pweb3.turmalina.dominio.Coleta</class>
+        <class>br.edu.ifpb.pweb3.turmalina.dominio.Amostra</class>
+        <class>br.edu.ifpb.pweb3.turmalina.dominio.RelatorioFinal</class>
+        <class>br.edu.ifpb.pweb3.turmalina.dominio.MovimentacaoEquipamento</class>
+        <class>br.edu.ifpb.pweb3.turmalina.dominio.Expedicao</class>
+        <class>br.edu.ifpb.pweb3.turmalina.dominio.PlanoSeguranca</class>
+        <class>br.edu.ifpb.pweb3.turmalina.dominio.AutorizacaoAmbiental</class>
+        <class>br.edu.ifpb.pweb3.turmalina.dominio.Participacao</class>
         <exclude-unlisted-classes>true</exclude-unlisted-classes>
         <properties>
             <property name="jakarta.persistence.jdbc.driver" value="org.postgresql.Driver"/>
