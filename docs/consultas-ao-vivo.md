@@ -37,28 +37,23 @@ As consultas de produção estão externalizadas no arquivo `src/main/resources/
 
 ## 2. Roteiro dos Arquivos Externos na pasta `consultas/`
 
-Os arquivos da pasta `consultas/` servem para testes e execução rápida via console interativo ou DBeaver/pgAdmin.
+Os arquivos da pasta `consultas/` servem para testes no console interativo.
 
-### `01-distribuicao-por-tipo.jpql`
-- **Arquivo:** `consultas/01-distribuicao-por-tipo.jpql`
-- **Consulta:** Agrupamento de pessoas utilizando a função JPQL `TYPE(p)` para contar subclasses (Pesquisador, GuiaEspeleologia, etc.).
+### `01-expedicoes-por-caverna.jpql`
+- **O que faz:** Realiza um `JOIN` entre Expedicao e Caverna, agrupando por caverna para calcular o total de expedições, soma de orçamentos aprovados e soma de custos realizados.
 
-### `02-maior-orcamento.jpql`
-- **Arquivo:** `consultas/02-maior-orcamento.jpql`
-- **Consulta:** Utilização do operador JPQL `>= ALL` em subquery para identificar a(s) expedição(ões) com o maior orçamento aprovado.
+### `02-participantes-da-expedicao.jpql`
+- **Uso no console:** Requer o parâmetro `codigo`. Exemplo: `:a 02 codigo=EXP-2026-001`
+- **O que faz:** Lista os participantes de uma expedição específica, calculando o custo previsto de cada um (`valorDiaria * quantidadeDiasPrevistos`) e ordenando do maior para o menor custo.
 
-### `03-pesquisadores-com-coletas.jpql`
-- **Arquivo:** `consultas/03-pesquisadores-com-coletas.jpql`
-- **Consulta:** Filtro de pesquisadores utilizando a cláusula `EXISTS` vinculada à entidade `Coleta`.
+### `03-pessoas-por-tipo.jpql`
+- **O que faz:** Utiliza a função `TYPE(p)` para agrupar e contar quantas pessoas existem cadastradas para cada subclasse (Pesquisador, Guia, Apoio Técnico, etc.).
 
-### `04-resumo-financeiro.jpql`
-- **Arquivo:** `consultas/04-resumo-financeiro.jpql`
-- **Consulta:** Agrupamento por caverna em JPQL calculando a contagem de expedições, soma de orçamentos e custos realizados.
+### `04-maior-orcamento.jpql`
+- **O que faz:** Utiliza o operador `>= ALL` em uma subquery para encontrar a expedição (ou expedições, em caso de empate) com o maior orçamento aprovado do banco.
 
-### `05-custo-participantes.jpql`
-- **Arquivo:** `consultas/05-custo-participantes.jpql`
-- **Consulta:** Projeção do custo previsto de participantes através do cálculo `valorDiaria * quantidadeDiasPrevistos` na entidade `Participacao`.
+### `05-pesquisadores-com-coleta.jpql`
+- **O que faz:** Utiliza a cláusula `EXISTS` para listar apenas os pesquisadores que são responsáveis por pelo menos uma coleta, filtrando os inativos.
 
 ### `06-colunas-das-tabelas.sql`
-- **Arquivo:** `consultas/06-colunas-das-tabelas.sql`
-- **Consulta:** SQL Nativo de metadados consultando a tabela de sistema `information_schema.columns` do PostgreSQL para inspecionar a estrutura física do banco.
+- **O que faz:** É uma consulta nativa SQL que acessa o `information_schema.columns` do PostgreSQL para mostrar os metadados físicos (tipo de dado, tamanho, nulidade) da tabela `expedicao`.

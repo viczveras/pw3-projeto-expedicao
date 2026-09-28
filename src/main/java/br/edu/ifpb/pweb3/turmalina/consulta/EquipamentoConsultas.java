@@ -13,7 +13,7 @@ import jakarta.persistence.EntityManager;
 public class EquipamentoConsultas {
 
     private static final EnumSet<SituacaoOperacional> FORA_DE_OPERACAO =
-            EnumSet.of(SituacaoOperacional.EM_MANUTENCAO, SituacaoOperacional.BAIXADO);
+            EnumSet.of(SituacaoOperacional.EM_MANUTENCAO, SituacaoOperacional.BAIXADO, SituacaoOperacional.AGUARDANDO_CALIBRACAO);
 
     private final EntityManager em;
 
