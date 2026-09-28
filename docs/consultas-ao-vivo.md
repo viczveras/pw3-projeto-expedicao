@@ -47,13 +47,13 @@ Os arquivos da pasta `consultas/` servem para testes no console interativo.
 - **O que faz:** Lista os participantes de uma expedição específica, calculando o custo previsto de cada um (`valorDiaria * quantidadeDiasPrevistos`) e ordenando do maior para o menor custo.
 
 ### `03-pessoas-por-tipo.jpql`
-- **O que faz:** Utiliza a função `TYPE(p)` para agrupar e contar quantas pessoas existem cadastradas para cada subclasse (Pesquisador, Guia, Apoio Técnico, etc.).
+- **O que faz:** Utiliza a função `TYPE(p)` para agrupar e contar quantas pessoas existem cadastradas para cada subclasse (Pessoa, Pesquisador e GuiaEspeleologia).
 
 ### `04-maior-orcamento.jpql`
 - **O que faz:** Utiliza o operador `>= ALL` em uma subquery para encontrar a expedição (ou expedições, em caso de empate) com o maior orçamento aprovado do banco.
 
 ### `05-pesquisadores-com-coleta.jpql`
-- **O que faz:** Utiliza a cláusula `EXISTS` para listar apenas os pesquisadores que são responsáveis por pelo menos uma coleta, filtrando os inativos.
+- **O que faz:** Utiliza a cláusula `EXISTS` para listar apenas os pesquisadores que são responsáveis por pelo menos uma coleta.
 
 ### `06-colunas-das-tabelas.sql`
 - **O que faz:** É uma consulta nativa SQL que acessa o `information_schema.columns` do PostgreSQL para mostrar os metadados físicos (tipo de dado, tamanho, nulidade) da tabela `expedicao`.
