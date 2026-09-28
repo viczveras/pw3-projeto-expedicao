@@ -5,6 +5,7 @@ import br.edu.ifpb.pweb3.turmalina.dominio.enums.NivelDificuldade;
 import br.edu.ifpb.pweb3.turmalina.dominio.enums.PapelParticipante;
 import br.edu.ifpb.pweb3.turmalina.dominio.enums.SituacaoAutorizacao;
 import br.edu.ifpb.pweb3.turmalina.dominio.enums.SituacaoExpedicao;
+import br.edu.ifpb.pweb3.turmalina.dominio.enums.Titulacao;
 import br.edu.ifpb.pweb3.turmalina.dominio.enums.UnidadeFederativa;
 import br.edu.ifpb.pweb3.turmalina.dominio.valor.Endereco;
 import br.edu.ifpb.pweb3.turmalina.dominio.valor.Localizacao;
@@ -80,6 +81,23 @@ class ExpedicaoTest {
 
         assertThrows(IllegalArgumentException.class, () -> expedicao.abrangerSetor(deOutra));
         assertEquals(Set.of(proprio), expedicao.getSetores());
+    }
+
+    @Test
+    void naoDeixaDeAbrangerSetorComColetaRegistrada() {
+        Caverna caverna = criarCaverna();
+        Setor comColeta = caverna.adicionarSetor(criarSetor("Salão principal"));
+        Setor semColeta = caverna.adicionarSetor(criarSetor("Galeria"));
+        Expedicao expedicao = criarExpedicao(caverna, criarPlano(), 5);
+        expedicao.abrangerSetor(comColeta);
+        expedicao.abrangerSetor(semColeta);
+        expedicao.registrarColeta(comColeta, criarPesquisador(), INICIO.plusHours(3), "Coleta manual");
+
+        assertThrows(IllegalStateException.class, () -> expedicao.deixarDeAbrangerSetor(comColeta));
+        expedicao.deixarDeAbrangerSetor(semColeta);
+
+        assertEquals(Set.of(comColeta), expedicao.getSetores());
+        assertEquals(1, expedicao.getColetas().size());
     }
 
     @Test
@@ -290,6 +308,13 @@ class ExpedicaoTest {
 
     private Setor criarSetor(String denominacao) {
         return new Setor(denominacao, NivelDificuldade.BAIXO, new BigDecimal("12.50"), BigDecimal.TEN, false);
+    }
+
+    private Pesquisador criarPesquisador() {
+        return new Pesquisador("Ana Beatriz Lima", "33333333333", LocalDate.of(1985, 3, 14), "ana@turmalina.org",
+                "83999990001", new Endereco("Av. Primeiro de Maio", "720", null, "Jaguaribe", "João Pessoa",
+                UnidadeFederativa.PB, "58015-435"), "REG-001", "Bioespeleologia", Titulacao.DOUTORADO,
+                new BigDecimal("180.00"));
     }
 
     private Pessoa criarPessoa(String cpf) {

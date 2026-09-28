@@ -140,6 +140,10 @@ public class Expedicao extends EntidadeBase {
     }
 
     public void deixarDeAbrangerSetor(Setor setor) {
+        if (coletas.stream().anyMatch(c -> mesmaEntidade(c.getSetor(), setor))) {
+            throw new IllegalStateException("O setor " + setor.getDenominacao()
+                    + " tem coleta registrada nesta expedição");
+        }
         setores.remove(setor);
     }
 
