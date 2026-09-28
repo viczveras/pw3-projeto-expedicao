@@ -1,123 +1,167 @@
 # TurmalinaPB Expedições Científicas Subterrâneas
 
-Projeto de Programação para a Web 3 (IFPB), desenvolvido por Victor, Alan e Ícaro. O produto é um modelo Java com Jakarta Persistence, esquema PostgreSQL, consultas e relatório técnico.
+Projeto I da disciplina Programação para a Web 3 (IFPB, Bacharelado em Engenharia de Software). O projeto modela um sistema de expedições científicas em cavernas e faz o mapeamento objeto-relacional desse modelo para o PostgreSQL com Jakarta Persistence.
 
-## Referência e estado atual
+Equipe: Victor Véras, Alan Borba e Ícaro Pontes.
 
-O [repositório setup](https://github.com/viczveras/pw3-projeto-expedicao-setup) é a referência técnica da equipe. O documento do professor, a divisão de responsabilidades e o código sanitizado estão nesse repositório, cujo acesso é privado. Esta implementação incorpora a referência gradativamente, com verificações e ajustes registrados em commits reais.
+## Entregáveis
 
-A parte de cadastros está incorporada: `EntidadeBase`, `Localizacao`, `Endereco`, `Caverna`, `Setor`, `Pessoa`, `Pesquisador`, `GuiaEspeleologia` e seus seis enums. Pessoas usam herança JOINED, com o endereço incorporado na tabela `pessoa`. Os modelos vieram do setup e receberam testes de domínio e de integração. A inclusão repetida do mesmo setor foi corrigida em relação à referência.
+| Entregável pedido no enunciado | Onde está |
+|---|---|
+| Diagrama de classes UML | [docs/diagrama-classes.md](docs/diagrama-classes.md) |
+| Entidades, enumerações e tipos incorporáveis | `src/main/java/br/edu/ifpb/pweb3/turmalina/dominio/` |
+| Unidade de persistência e dependências | `src/main/resources/META-INF/persistence.xml` e `pom.xml` |
+| Consultas JPA | `src/main/resources/META-INF/orm.xml` e `src/main/java/br/edu/ifpb/pweb3/turmalina/consulta/` |
+| SQL gerado pelas consultas | [docs/evidencias-sql.md](docs/evidencias-sql.md) |
+| Relatório técnico (herança, dono das associações, cascatas, orphanRemoval e carregamento) | [docs/relatorio-tecnico.md](docs/relatorio-tecnico.md) |
 
-A estrutura base também está pronta: Maven Wrapper, unidade de persistência com as entidades já incorporadas, PostgreSQL via Docker Compose, uma inicialização que valida conexão e mapeamentos, testes de integração e build no GitHub Actions. Ainda não há expedições, equipamentos, coletas, console ou consultas de negócio.
+## Tecnologias
 
-## Ambiente
+- Java 21
+- Jakarta Persistence 3.1 com Hibernate ORM 6.6.4
+- PostgreSQL 17
+- Maven 3.9.9, baixado automaticamente pelo Maven Wrapper
+- JUnit 5.11
+- Docker Compose e GitHub Actions
 
-- JDK 21.
-- Maven 3.9.9, baixado automaticamente pelo Maven Wrapper (`mvnw`/`mvnw.cmd`); não é preciso instalá-lo.
-- Docker com Compose, para o PostgreSQL 17 e a execução em container.
-- Hibernate 6.6.4.Final e driver PostgreSQL 42.7.4, mantendo as versões do setup.
-- JUnit Jupiter 5.11.4 para os testes adicionados nesta implementação.
+## Modelo
 
-## Compilar e testar
+O modelo tem 14 entidades: `Caverna`, `Setor`, `Pessoa`, `Pesquisador`, `GuiaEspeleologia`, `Expedicao`, `PlanoSeguranca`, `AutorizacaoAmbiental`, `Participacao`, `Equipamento`, `MovimentacaoEquipamento`, `Coleta`, `Amostra` e `RelatorioFinal`.
 
-Na raiz deste repositório (no PowerShell, use `.\mvnw.cmd` no lugar de `./mvnw`):
+- **Herança:** `Pesquisador` e `GuiaEspeleologia` especializam `Pessoa` com a estratégia `JOINED`. Cada especialização tem tabela própria ligada à tabela `pessoa`, e a coluna `tipo_pessoa` identifica o tipo de cada registro.
+- **Tipos incorporáveis:** `Localizacao` fica na tabela `caverna`, e `Endereco` fica na tabela `pessoa`. Nenhum dos dois tem identidade ou tabela própria.
+- **Associações:** há relações 1:1 (expedição e plano de segurança, expedição e relatório final), 1:N (caverna e setores, expedição e coletas, coleta e amostras) e duas entidades associativas (`Participacao` e `MovimentacaoEquipamento`).
+- **Tipos de dados:** as 17 enumerações são gravadas como texto, os campos lógicos são `boolean` do PostgreSQL, as datas usam `java.time`, os valores monetários e as medições usam `numeric` com precisão definida, e os arquivos são objetos grandes (`@Lob`).
+- **Integridade:** os identificadores são gerados pelo banco (`IDENTITY`). As regras de obrigatoriedade, tamanho, unicidade e valores válidos estão nas anotações e são criadas como restrições no esquema. O script `META-INF/sql/pos-criacao.sql` cria as regras que o Hibernate não gera, como a de uma única autorização vigente por expedição.
+
+As justificativas de cada decisão estão no [relatório técnico](docs/relatorio-tecnico.md).
+
+## Consultas
+
+### Os seis casos do enunciado
+
+| Caso | Consulta nomeada | Método | Comandos SQL |
+|---|---|---|---|
+| Expedições por período e situação | `Expedicao.listarPorPeriodoESituacao` | `ExpedicaoConsultas.listarPorPeriodoESituacao` | 1 |
+| Detalhes de uma expedição com participantes, sem arquivos | `Expedicao.buscarComCavernaESetores` e `Participacao.listarResumoPorExpedicao` | `ExpedicaoConsultas.carregarDetalhes` | 2 |
+| Coletas de uma expedição com setor e pesquisador | `Coleta.listarPorExpedicaoComSetorEPesquisador` | `ColetaConsultas.listarPorExpedicao` | 1 |
+| Amostras de uma coleta, ao abrir os detalhes | `Amostra.listarResumoPorColeta` | `ColetaConsultas.listarAmostras` | 1 |
+| Equipamentos disponíveis num período, sem carregar o histórico | `Equipamento.listarDisponiveisNoPeriodo` | `EquipamentoConsultas.listarDisponiveis` | 1 |
+| Download separado do mapa, da autorização ou do relatório | `PlanoSeguranca.mapaRotaPorExpedicao`, `AutorizacaoAmbiental.pdfPorExpedicaoESituacao` e `RelatorioFinal.arquivoPorExpedicao` | `ArquivoConsultas` | 1 por arquivo |
+
+As listagens usam projeções e `join fetch` para buscar apenas o necessário, e os arquivos só são lidos pelas consultas de download. O SQL gerado em cada caso e a contagem de comandos estão em [docs/evidencias-sql.md](docs/evidencias-sql.md). O mesmo documento mostra, para comparação, uma listagem feita do jeito errado, que provoca o problema N+1.
+
+### Consultas nomeadas no `orm.xml`
+
+As consultas do sistema, executadas pelas classes do pacote `consulta`, estão registradas em `src/main/resources/META-INF/orm.xml`, com o cabeçalho da JPA 3.1, e nenhuma está em anotações nas entidades. São 14 consultas nomeadas: 12 em JPQL e 2 em SQL nativo. As nativas usam recursos do PostgreSQL que a JPQL não oferece: um ranking de pesquisadores com `dense_rank()` e um resumo financeiro por caverna com `count(...) filter (where ...)`. O arquivo é declarado no `persistence.xml` com `<mapping-file>`.
+
+## Como executar
+
+É preciso ter o JDK 21 e o Docker Desktop. O Maven não precisa ser instalado. Os comandos abaixo são executados na raiz do repositório. No PowerShell, use `.\mvnw.cmd` no lugar de `./mvnw`; para os acentos aparecerem corretamente no terminal do Windows, execute `chcp 65001` antes.
+
+### Testes
 
 ```bash
 ./mvnw -B verify
 ```
 
-O comando compila e executa os testes de domínio e de configuração, sem banco. Eles verificam limites de coordenadas, igualdade por valor, normalização do CEP e do CPF, vínculos caverna/setor, duplicidade, inspeção, especializações de pessoa, validade da certificação do guia e leitura das variáveis de conexão.
-
-Testes de integração com PostgreSQL:
+Executa os testes que não usam banco de dados. Para incluir os testes com PostgreSQL:
 
 ```bash
 docker compose --profile test up -d --wait postgres-test
 ./mvnw -B -Pintegracao verify
 ```
 
-O perfil `integracao` executa também as classes `*IT` contra o banco de testes (porta 5435, dados em memória). Cada classe herda de `IntegracaoPostgres`, que cria um esquema próprio, gera as tabelas a partir dos mapeamentos e o remove ao final. Os testes cobrem:
+São 120 testes: 74 sem banco e 46 com PostgreSQL. Cada classe de teste com banco cria um esquema próprio e o remove ao final. O GitHub Actions executa os mesmos testes a cada push e pull request.
 
-- cavernas: persistência em cascata, carregamento sob demanda dos setores, código ambiental único, profundidade negativa rejeitada, remoção de setor órfão e recusa de remover setor com coleta ou abrangido por expedição;
-- pessoas: tabelas da herança JOINED com discriminador, consulta polimórfica, igualdade entre proxy e subtipo, CPF, e-mail e registro únicos, bolsa negativa rejeitada e tipos nativos do PostgreSQL (`boolean`, `date`, `numeric`);
-- script pós-criação: executado no esquema do teste depois das tabelas, com índice único parcial aplicado pelo banco.
-
-Quando existir `src/main/resources/META-INF/sql/pos-criacao.sql`, a base dos testes o executa automaticamente depois de criar as tabelas, com o esquema do teste como `search_path`. Assim, regras que só o banco garante (como o índice parcial de autorização vigente) também são testadas. O GitHub Actions executa o mesmo comando a cada push e pull request.
-
-## Executar
+### Demonstração
 
 ```bash
 docker compose up -d --wait postgres
-./mvnw -B -q compile exec:java
+./mvnw -q -Pdemonstracao compile exec:java
 ```
 
-Ou inteiramente em container:
+A demonstração recria o esquema, carrega os dados de exemplo e executa os seis casos do enunciado, mostrando o resultado, o SQL gerado e a quantidade de comandos de cada consulta. **Ela apaga os dados do banco configurado.**
 
-```bash
-docker compose run --rm --build app
-```
-
-A saída esperada é `TurmalinaPB: conexao e mapeamentos inicializados.`, seguida da contagem de cavernas, setores e pessoas. O banco de desenvolvimento escuta em `127.0.0.1:5434` e guarda os dados no volume `dados-postgres`. As tabelas são criadas ou atualizadas (`hibernate.hbm2ddl.auto=update`) sem apagar os dados existentes. Nesse modo o script pós-criação não é executado.
-
-A demonstração usa outra configuração, `Configuracao.propriedadesDaDemonstracao()`: recria o esquema (apaga os dados do banco configurado), executa o script pós-criação quando ele existir e exibe o SQL gerado e as estatísticas do Hibernate, que servem de evidência contra N+1. Execute-a só em banco descartável.
-
-Para mudar porta ou credenciais do Compose, copie `.env.example` para `.env`. Na execução local, a conexão pode ser trocada pelas variáveis `TURMALINA_DB_URL`, `TURMALINA_DB_USER` e `TURMALINA_DB_PASSWORD`. Para encerrar o ambiente: `docker compose --profile test down`.
-
-## Console de consultas ao vivo
-
-O console executa consultas no banco sem recompilar e mostra o resultado em tabela e, quando pedido, o SQL gerado pelo Hibernate com a quantidade de comandos:
+### Console de consultas
 
 ```bash
 docker compose up -d --wait postgres
 ./mvnw -q -Pconsole compile exec:java
 ```
 
+O console executa consultas no banco sem recompilar o projeto. Na primeira execução, se as tabelas não existirem, ele cria o esquema e carrega os dados de exemplo.
+
 | Comando | O que faz |
 |---|---|
-| `<JPQL>;` | executa JPQL digitada na hora (pode ocupar várias linhas; termina com `;`) |
-| `:sql <comando>;` | executa SQL nativo do PostgreSQL (`:sql` sozinho troca de modo; `:jpql` volta) |
-| `:consultas` | lista as consultas nomeadas do `orm.xml`, com seus parâmetros |
+| `<JPQL>;` | executa uma consulta JPQL (pode ocupar várias linhas e termina com `;`) |
+| `:sql <comando>;` | executa um comando SQL do PostgreSQL |
+| `:consultas` | lista as consultas nomeadas do `orm.xml` e seus parâmetros |
 | `:ver <nome>` | mostra o texto de uma consulta nomeada |
-| `:x <nome> [p=valor ...]` | executa uma consulta nomeada; parâmetros não informados são perguntados |
-| `:arquivos` / `:a <arquivo>` | lista e executa as consultas salvas na pasta `consultas/` |
-| `:mostrarsql on\|off` | exibe ou oculta o SQL gerado |
+| `:x <nome> [parâmetro=valor ...]` | executa uma consulta nomeada; os parâmetros que faltarem são perguntados |
+| `:arquivos` e `:a <arquivo>` | listam e executam as consultas da pasta `consultas/` |
+| `:mostrarsql on` ou `off` | mostra ou esconde o SQL gerado pelo Hibernate |
 | `:pagina <n> [tamanho]` | pagina as próximas consultas |
-| `:recriar` | recria o esquema, executa o script pós-criação e carrega os dados de exemplo |
-| `:ajuda` / `:sair` | lista os comandos / encerra |
+| `:recriar` | recria o esquema e recarrega os dados de exemplo (**apaga os dados**) |
+| `:ajuda` e `:sair` | listam os comandos e encerram o console |
 
-Formatos de parâmetro: `2026-08-10`, `2026-08-10T07:00`, `agora`, `agora+7d`, enums pelo nome (`CONCLUIDA`), listas separadas por vírgula (`PLANEJADA,CONCLUIDA`) e entidades pelo id. Exemplo:
+Os parâmetros aceitam datas (`2026-08-10`), data e hora (`2026-08-10T07:00`), `agora` e `agora+7d`, enumerações pelo nome (`CONCLUIDA`), listas separadas por vírgula (`PLANEJADA,CONCLUIDA`) e entidades pelo id. Exemplo:
 
 ```
 :x Coleta.listarPorExpedicaoComSetorEPesquisador expedicaoId=1
 ```
 
-Ao iniciar, o console só cria o esquema se as tabelas não existirem. `:recriar` e `--recriar` apagam os dados do banco configurado: use-os no banco de desenvolvimento ou de demonstração.
+Um roteiro de consultas para a apresentação está em [docs/consultas-ao-vivo.md](docs/consultas-ao-vivo.md).
 
-## Divisão de trabalho
+### Verificar a conexão
 
-| Integrante | Frente | Responsabilidades |
+```bash
+./mvnw -q compile exec:java
+```
+
+Conecta ao banco de desenvolvimento, confere os mapeamentos e mostra quantas cavernas, setores e pessoas existem. Sem apagar dados, as tabelas são criadas ou atualizadas conforme o modelo. O mesmo pode ser feito dentro de um contêiner com `docker compose run --rm --build app`.
+
+### Bancos e configuração
+
+| Banco | Endereço | Uso |
 |---|---|---|
-| Victor | Cadastros e infraestrutura | Base de entidades, valores incorporados, cavernas, setores, pessoas, herança, configuração e console |
-| Alan | Planejamento | Expedição, plano, autorização, participação, consultas de expedição e integração do ORM |
-| Ícaro | Operação e resultados | Equipamentos, movimentações, coletas, amostras, relatório final e demonstração |
+| Desenvolvimento | `localhost:5434`, base `turmalina` | aplicação, demonstração e console; os dados ficam no volume `dados-postgres` |
+| Testes | `localhost:5435`, base `turmalina_test` | testes com PostgreSQL; os dados ficam só na memória do contêiner |
 
-Os aproximadamente 33% por integrante representam estimativa de esforço, não número igual de classes. Cada um também verifica e documenta sua área. Até aqui, só a parte de Victor foi incorporada.
+Para mudar portas e credenciais do Docker Compose, copie `.env.example` para `.env`. Nas execuções locais, a conexão pode ser trocada pelas variáveis `TURMALINA_DB_URL`, `TURMALINA_DB_USER` e `TURMALINA_DB_PASSWORD`. Para desligar os bancos, use `docker compose --profile test down`.
 
-## Organização e desenvolvimento
+## Estrutura do repositório
 
-- [Diagrama de classes completo](docs/diagrama-classes.md): as 14 entidades, os 2 tipos incorporáveis, associações, cardinalidades, enums e unicidades.
-- [UML inicial dos cadastros](docs/diagrama-cadastros.md): desenho registrado antes da incorporação das classes de Victor.
-- [Verificações das entregas de Victor](docs/validacao-victor.md): resultados e ajuste reproduzido na referência.
-- `src/main/java/br/edu/ifpb/pweb3/turmalina/`: fontes incorporados durante o desenvolvimento.
-- `src/main/resources/META-INF/persistence.xml`: unidade `turmalinaPU`; cada entidade entra nela no mesmo commit em que é incorporada.
-- `src/test/java/br/edu/ifpb/pweb3/turmalina/`: testes dos comportamentos implementados (`*Test` sem banco, `*IT` com PostgreSQL, uma classe `*IT` por área).
-- `docker-compose.yml`, `Dockerfile` e `.github/workflows/build.yml`: bancos de desenvolvimento e de testes, imagem da aplicação e build automatizado.
+```
+src/main/java/br/edu/ifpb/pweb3/turmalina/
+├── dominio/            entidades e a classe base EntidadeBase
+│   ├── enums/          enumerações
+│   └── valor/          tipos incorporáveis (Localizacao e Endereco)
+├── consulta/           classes que executam as consultas nomeadas
+│   └── dto/            projeções usadas nas listagens
+└── app/                configuração, demonstração, console e dados de exemplo
+src/main/resources/META-INF/
+├── persistence.xml     unidade de persistência turmalinaPU
+├── orm.xml             consultas nomeadas
+└── sql/pos-criacao.sql regras criadas depois do esquema
+src/test/java/          testes sem banco (*Test) e com PostgreSQL (*IT)
+consultas/              consultas em arquivo, executadas pelo console
+docs/                   diagramas, relatório, evidências e roteiros
+```
 
-No repositório real, editar os fontes nesses caminhos; não criar cópias por integrante dentro da aplicação.
+## Documentação
 
-Cada etapa deve compilar e passar nas verificações disponíveis antes do commit. Integrações ocorrem por pull request; atualizar a branch com as dependências necessárias antes de começar uma funcionalidade que as consome.
+- [Diagrama de classes](docs/diagrama-classes.md): entidades, tipos incorporáveis, associações, cardinalidades, enumerações e unicidades.
+- [Relatório técnico](docs/relatorio-tecnico.md): justificativas do mapeamento e decisões de domínio.
+- [Evidências SQL](docs/evidencias-sql.md): SQL gerado e quantidade de comandos de cada caso do enunciado.
+- [Consultas ao vivo](docs/consultas-ao-vivo.md): roteiro de consultas para a apresentação.
+- [Diagrama inicial dos cadastros](docs/diagrama-cadastros.md): primeiro recorte do modelo, feito antes da implementação.
+- Verificações de cada parte: [Victor](docs/validacao-victor.md) e [Alan](docs/validacao-alan.md), com os testes executados e as falhas encontradas e corrigidas.
 
-## Entregas seguintes de Victor
+## Divisão do trabalho
 
-1. Atualizar o README final da entrega.
-
-As funcionalidades completas presentes no setup não devem ser confundidas com o que já foi incorporado aqui. As lacunas identificadas na revisão do setup precisam de testes e correções durante a implementação.
+| Integrante | Parte | Principais itens |
+|---|---|---|
+| Victor Véras | Cadastros e infraestrutura | `EntidadeBase`, cavernas, setores, pessoas e herança, tipos incorporáveis, unidade de persistência, Docker, testes com PostgreSQL, integração contínua, console de consultas e diagrama de classes |
+| Alan Borba | Planejamento | expedição, plano de segurança, autorização ambiental, participação, `orm.xml`, consultas de expedição e de download, script pós-criação e relatório técnico |
+| Ícaro Pontes | Operação e resultados | equipamentos e movimentações, coletas, amostras, relatório final, consultas de coletas e equipamentos, indicadores, dados de exemplo, demonstração e evidências SQL |
