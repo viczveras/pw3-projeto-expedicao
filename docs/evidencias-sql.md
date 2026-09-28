@@ -8,7 +8,7 @@ Este documento registra a execução do programa principal de demonstração (`b
 [INFO] Scanning for projects...
 [INFO] 
 [INFO] -------------------< br.edu.ifpb.pweb3:turmalina-pb >-------------------
-[INFO] Building TurmalinaPB - Expedi��es Cient�ficas Subterr�neas 1.0.0-SNAPSHOT
+[INFO] Building TurmalinaPB - Expedições Científicas Subterrâneas 1.0.0-SNAPSHOT
 [INFO]   from pom.xml
 [INFO] --------------------------------[ jar ]---------------------------------
 [INFO] 
@@ -19,7 +19,7 @@ Este documento registra a execução do programa principal de demonstração (`b
 [INFO] Nothing to compile - all classes are up to date.
 [INFO] 
 [INFO] --- hibernate-enhance:6.6.4.Final:enhance (default) @ turmalina-pb ---
-[INFO] Starting Hibernate enhancement for classes on D:\IFPB\PER�ODOS\P4\PWEB3\pw3-projeto-expedicao\target\classes
+[INFO] Starting Hibernate enhancement for classes on D:\IFPB\PERÍODOS\P4\PWEB3\pw3-projeto-expedicao\target\classes
 [INFO] 
 [INFO] --- exec:3.5.0:java (default-cli) @ turmalina-pb ---
 Hibernate: 
@@ -722,11 +722,11 @@ Hibernate:
 >>> comandos SQL emitidos: 40
 
 ====================================================================================================
-1. Listar expedi��es por per�odo e situa��o (proje��o)
+1. Listar expedições por período e situação (projeção)
 ====================================================================================================
 Hibernate: 
     /*              select
-        new br.edu.ifpb.pweb3.turmalina.consulta.dto.ExpedicaoResumo(                 e.id, e.codigo, e.titulo, c.nomeOficial, e.inicioPrevisto, e.terminoPrevisto, e.situacao)             
+        new br.edu.ifpb.pweb3.turmalina.consulta.dto.ExpedicaoResumo(                e.id, e.codigo, e.titulo, c.nomeOficial, e.inicioPrevisto, e.terminoPrevisto, e.situacao)             
     from
         Expedicao e             
     join
@@ -757,13 +757,13 @@ Hibernate:
         order by
             e1_0.inicio_previsto,
             e1_0.codigo
-   EXP-2026-001 | Levantamento bioespeleol�gico da Galeria das �guas | Gruta da Serra Verde | 2026-08-10T07:00 -> 2026-08-15T18:00 | CONCLUIDA
-   EXP-2026-002 | Mapeamento topogr�fico da Furna do Lajedo | Furna do Lajedo | 2026-10-05T07:00 -> 2026-10-09T17:00 | PLANEJADA
-   EXP-2026-003 | Monitoramento h�drico da Galeria das �guas | Gruta da Serra Verde | 2026-11-03T06:00 -> 2026-11-06T18:00 | PLANEJADA
+   EXP-2026-001 | Levantamento bioespeleológico da Galeria das Águas | Gruta da Serra Verde | 2026-08-10T07:00 -> 2026-08-15T18:00 | CONCLUIDA
+   EXP-2026-002 | Mapeamento topográfico da Furna do Lajedo | Furna do Lajedo | 2026-10-05T07:00 -> 2026-10-09T17:00 | PLANEJADA
+   EXP-2026-003 | Monitoramento hídrico da Galeria das Águas | Gruta da Serra Verde | 2026-11-03T06:00 -> 2026-11-06T18:00 | PLANEJADA
 >>> comandos SQL emitidos: 1
 
 ====================================================================================================
-1b. ANTI-EXEMPLO: entidades + acesso � caverna (N+1)
+1b. ANTI-EXEMPLO: entidades + acesso à caverna (N+1)
 ====================================================================================================
 Hibernate: 
     /* select
@@ -832,7 +832,7 @@ Hibernate:
 >>> comandos SQL emitidos: 3
 
 ====================================================================================================
-2. Detalhes de uma expedi��o com participantes (sem bin�rios)
+2. Detalhes de uma expedição com participantes (sem binários)
 ====================================================================================================
 Hibernate: 
     /*              select
@@ -900,7 +900,7 @@ Hibernate:
             e1_0.id=?
 Hibernate: 
     /*              select
-        new br.edu.ifpb.pweb3.turmalina.consulta.dto.ParticipanteResumo(                 p.id, pe.id, pe.nome, p.papel, p.dataConfirmacao, p.presencaConfirmada)             
+        new br.edu.ifpb.pweb3.turmalina.consulta.dto.ParticipanteResumo(                p.id, pe.id, pe.nome, p.papel, p.dataConfirmacao, p.presencaConfirmada)             
     from
         Participacao p             
     join
@@ -926,15 +926,15 @@ Hibernate:
         order by
             p1_0.papel,
             p2_0.nome
-   EXP-2026-001 - Levantamento bioespeleol�gico da Galeria das �guas (Gruta da Serra Verde), setores: 2
+   EXP-2026-001 - Levantamento bioespeleológico da Galeria das Águas (Gruta da Serra Verde), setores: 2
    - APOIO_TECNICO: Ravi Medeiros
    - COORDENADOR: Ana Beatriz Lima
    - GUIA: Maria Eduarda Souto
-   - PESQUISADOR: Caio N�brega
+   - PESQUISADOR: Caio Nóbrega
 >>> comandos SQL emitidos: 2
 
 ====================================================================================================
-3. Coletas de uma expedi��o com setor e pesquisador (fetch join)
+3. Coletas de uma expedição com setor e pesquisador (fetch join)
 ====================================================================================================
 Hibernate: 
     /*              select
@@ -1007,8 +1007,8 @@ Hibernate:
             c1_0.expedicao_id=? 
         order by
             c1_0.data_hora
-   2026-08-11T10:30 | Galeria das �guas | Ana Beatriz Lima | Busca ativa com pin�a
-   2026-08-12T14:00 | Sal�o Principal | Caio N�brega | Testemunho de sedimento
+   2026-08-11T10:30 | Galeria das Águas | Ana Beatriz Lima | Busca ativa com pinça
+   2026-08-12T14:00 | Salão Principal | Caio Nóbrega | Testemunho de sedimento
 >>> comandos SQL emitidos: 1
 
 ====================================================================================================
@@ -1016,7 +1016,7 @@ Hibernate:
 ====================================================================================================
 Hibernate: 
     /*              select
-        new br.edu.ifpb.pweb3.turmalina.consulta.dto.AmostraResumo(                 a.id, a.codigoCampo, a.categoria, a.quantidade, a.unidadeMedida,                 a.dataAcondicionamento, a.condicaoConservacao, a.materialPerigoso, a.observacoes)             
+        new br.edu.ifpb.pweb3.turmalina.consulta.dto.AmostraResumo(                a.id, a.codigoCampo, a.categoria, a.quantidade, a.unidadeMedida,                a.dataAcondicionamento, a.condicaoConservacao, a.materialPerigoso, a.observacoes)             
     from
         Amostra a             
     where
@@ -1043,7 +1043,7 @@ Hibernate:
 >>> comandos SQL emitidos: 1
 
 ====================================================================================================
-5. Equipamentos dispon�veis nos pr�ximos 7 dias (NOT EXISTS, sem hist�rico)
+5. Equipamentos disponíveis nos próximos 7 dias (NOT EXISTS, sem histórico)
 ====================================================================================================
 Hibernate: 
     /*              select
@@ -1096,12 +1096,12 @@ Hibernate:
         order by
             e1_0.tipo,
             e1_0.nome
-   PAT-000103 | R�dio subterr�neo HeyPhone
-   PAT-000101 | Lanterna de cabe�a 1200 lm
+   PAT-000103 | Rádio subterrâneo HeyPhone
+   PAT-000101 | Lanterna de cabeça 1200 lm
 >>> comandos SQL emitidos: 1
 
 ====================================================================================================
-6. Download isolado dos arquivos bin�rios
+6. Download isolado dos arquivos binários
 ====================================================================================================
 Hibernate: 
     /*              select
@@ -1135,7 +1135,7 @@ Hibernate:
         where
             aa1_0.expedicao_id=? 
             and aa1_0.situacao=?
-   autoriza��o PDF:  20 bytes
+   autorização PDF:  20 bytes
 Hibernate: 
     /*              select
         r.arquivo 
@@ -1153,7 +1153,7 @@ Hibernate:
                 on rf1_0.id=e1_0.relatorio_final_id 
         where
             e1_0.id=?
-   relat�rio final:  24 bytes
+   relatório final:  24 bytes
 >>> comandos SQL emitidos: 3
 
 ====================================================================================================
@@ -1186,7 +1186,7 @@ Hibernate:
         posicao,
         pe.nome         
    1. Ana Beatriz Lima | coletas: 1 | amostras: 2
-   2. Caio N�brega | coletas: 1 | amostras: 1
+   2. Caio Nóbrega | coletas: 1 | amostras: 1
    Resumo financeiro por caverna (COUNT ... FILTER):
 Hibernate: 
     /* dynamic native-SQL query */              select
@@ -1194,7 +1194,7 @@ Hibernate:
         count(e.id)                                                  as expedicoes,
         count(e.id) filter (
     where
-        e.situacao = 'CONCLUIDA')          as concluidas,                    coalesce(sum(e.orcamento_aprovado), 0)                       as orcamento_total,                    coalesce(sum(e.custo_realizado), 0)                          as custo_total,                    round(100 * sum(e.custo_realizado) / nullif(sum(e.orcamento_aprovado), 0), 1)                                                                                 as percentual_executado             
+        e.situacao = 'CONCLUIDA')          as concluidas,                    coalesce(sum(e.orcamento_aprovado), 0)                       as orcamento_total,                    coalesce(sum(e.custo_realizado), 0)                          as custo_total,                    round(100 * sum(e.custo_realizado) / nullif(sum(e.orcamento_aprovado), 0), 1)                                                                                                           as percentual_executado             
     from
         caverna cv             
     left join
@@ -1205,8 +1205,8 @@ Hibernate:
         cv.nome_oficial             
     order by
         cv.nome_oficial         
-   Furna do Lajedo | expedi��es: 1 (conclu�das: 0) | or�amento: 12000.00 | custo: 0.00 | executado: 0.0%
-   Gruta da Serra Verde | expedi��es: 2 (conclu�das: 1) | or�amento: 53000.00 | custo: 31280.55 | executado: 59.0%
+   Furna do Lajedo | expedições: 1 (concluídas: 0) | orçamento: 12000.00 | custo: 0.00 | executado: 0.0%
+   Gruta da Serra Verde | expedições: 2 (concluídas: 1) | orçamento: 53000.00 | custo: 31280.55 | executado: 59.0%
 >>> comandos SQL emitidos: 2
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS

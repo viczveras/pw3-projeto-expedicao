@@ -83,7 +83,6 @@
         ]]></query>
     </named-query>
 
-    <!-- Consultas nomeadas do Ícaro (Bloco extraído estritamente do referência.zip) -->
     <named-query name="Coleta.listarPorExpedicaoComSetorEPesquisador">
         <description>Coletas de uma expedição com setor e pesquisador responsável em um único SELECT (fetch join). Amostras continuam LAZY.</description>
         <query><![CDATA[
