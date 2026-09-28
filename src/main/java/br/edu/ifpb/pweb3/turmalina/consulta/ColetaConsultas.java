@@ -1,10 +1,11 @@
 package br.edu.ifpb.pweb3.turmalina.consulta;
 
-import br.edu.ifpb.pweb3.turmalina.consulta.dto.AmostraResumo;
-import jakarta.persistence.EntityManager;
-
 import java.util.List;
 import java.util.Objects;
+
+import br.edu.ifpb.pweb3.turmalina.consulta.dto.AmostraResumo;
+import br.edu.ifpb.pweb3.turmalina.dominio.Coleta;
+import jakarta.persistence.EntityManager;
 
 public class ColetaConsultas {
 
@@ -14,16 +15,15 @@ public class ColetaConsultas {
         this.em = Objects.requireNonNull(em);
     }
 
-    public List<AmostraResumo> listarAmostrasPorExpedicao(Long expedicaoId) {
-        return em.createNamedQuery("Coleta.listarResumoAmostrasPorExpedicao", AmostraResumo.class)
+    public List<Coleta> listarPorExpedicao(Long expedicaoId) {
+        return em.createNamedQuery("Coleta.listarPorExpedicaoComSetorEPesquisador", Coleta.class)
                 .setParameter("expedicaoId", expedicaoId)
                 .getResultList();
     }
 
-    public byte[] buscarFotografiaAmostra(Long amostraId) {
-        List<byte[]> resultado = em.createNamedQuery("Amostra.fotografiaPorId", byte[].class)
-                .setParameter("amostraId", amostraId)
+    public List<AmostraResumo> listarAmostras(Long coletaId) {
+        return em.createNamedQuery("Amostra.listarResumoPorColeta", AmostraResumo.class)
+                .setParameter("coletaId", coletaId)
                 .getResultList();
-        return resultado.isEmpty() ? null : resultado.get(0);
     }
 }

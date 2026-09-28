@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <entity-mappings xmlns="https://jakarta.ee/xml/ns/persistence/orm"
-                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                  xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence/orm
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence/orm
                       https://jakarta.ee/xml/ns/persistence/orm/orm_3_1.xsd"
-                  version="3.1">
+                 version="3.1">
 
     <description>Consultas nomeadas (JPQL e SQL nativo) do TurmalinaPB</description>
 
@@ -83,41 +83,100 @@
         ]]></query>
     </named-query>
 
-    <named-query name="Coleta.listarResumoAmostrasPorExpedicao">
-        <description>Listagem de amostras coletadas em uma expedição.</description>
+    <!-- Consultas nomeadas do Ícaro (Bloco extraído estritamente do referência.zip) -->
+    <named-query name="Coleta.listarPorExpedicaoComSetorEPesquisador">
+        <description>Coletas de uma expedição com setor e pesquisador responsável em um único SELECT (fetch join). Amostras continuam LAZY.</description>
+        <query><![CDATA[
+            select c from Coleta c
+            join fetch c.setor
+            join fetch c.pesquisadorResponsavel
+            where c.expedicao.id = :expedicaoId
+            order by c.dataHora
+        ]]></query>
+    </named-query>
+    <named-query name="Amostra.listarResumoPorColeta">
+        <description>Amostras de uma coleta, ao abrir os detalhes. Projeção sem a fotografia.</description>
         <query><![CDATA[
             select new br.edu.ifpb.pweb3.turmalina.consulta.dto.AmostraResumo(
                 a.id, a.codigoCampo, a.categoria, a.quantidade, a.unidadeMedida,
                 a.dataAcondicionamento, a.condicaoConservacao, a.materialPerigoso, a.observacoes)
             from Amostra a
-            join a.coleta c
-            where c.expedicao.id = :expedicaoId
+            where a.coleta.id = :coletaId
             order by a.codigoCampo
         ]]></query>
     </named-query>
-
-    <named-query name="MovimentacaoEquipamento.listarPorExpedicao">
-        <description>Movimentações registradas em uma expedição específica.</description>
+    <named-query name="Equipamento.listarDisponiveisNoPeriodo">
+        <description>Equipamentos em operação sem movimentação que ocupe [inicio, fim). NOT EXISTS resolvido no banco, sem carregar o histórico. Retirada não devolvida e em atraso bloqueia.</description>
+        <query><![CDATA[
+            select e from Equipamento e
+            where e.situacaoOperacional not in :foraDeOperacao
+              and not exists (
+                  select m.id from MovimentacaoEquipamento m
+                  where m.equipamento = e
+                    and m.retiradaEm < :fim
+                    and (   (m.devolucaoEfetiva is not null and m.devolucaoEfetiva > :inicio)
+                         or (m.devolucaoEfetiva is null
+                             and (m.previsaoDevolucao > :inicio or m.previsaoDevolucao <= :agora))))
+            order by e.tipo, e.nome
+        ]]></query>
+    </named-query>
+    <named-query name="MovimentacaoEquipamento.historicoPorEquipamento">
+        <description>Histórico de um equipamento (mais recentes primeiro), para uso paginado.</description>
         <query><![CDATA[
             select m from MovimentacaoEquipamento m
-            join fetch m.equipamento eq
-            join fetch m.responsavel r
-            where m.expedicao.id = :expedicaoId
-            order by m.retiradaEm
+            join fetch m.expedicao
+            join fetch m.responsavel
+            where m.equipamento.id = :equipamentoId
+            order by m.retiradaEm desc
         ]]></query>
     </named-query>
-
-    <named-query name="Pesquisador.rankingPorAmostras">
-        <description>Ranking de pesquisadores por total de amostras coletadas.</description>
+    <named-native-query name="Pesquisador.rankingPorAmostras" result-set-mapping="RankingPesquisador">
+        <description>SQL nativo: ranking de pesquisadores por amostras coletadas, com função de janela dense_rank() (não existe em JPQL).</description>
         <query><![CDATA[
-            select new br.edu.ifpb.pweb3.turmalina.consulta.dto.RankingPesquisador(
-                p.id, p.nome, count(a.id))
-            from Amostra a
-            join a.coleta c
-            join c.pesquisadorResponsavel p
-            group by p.id, p.nome
-            order by count(a.id) desc, p.nome
+            select dense_rank() over (order by count(a.id) desc) as posicao,
+                   pe.nome                                      as nome,
+                   count(distinct c.id)                         as coletas,
+                   count(a.id)                                  as amostras
+            from pesquisador p
+            join pessoa pe     on pe.id = p.pessoa_id
+            left join coleta c on c.pesquisador_id = p.pessoa_id
+            left join amostra a on a.coleta_id = c.id
+            group by pe.id, pe.nome
+            order by posicao, pe.nome
         ]]></query>
-    </named-query>
-
+    </named-native-query>
+    <named-native-query name="Caverna.resumoFinanceiro" result-set-mapping="ResumoCaverna">
+        <description>SQL nativo: expedições, orçamento e custo por caverna, com agregação filtrada COUNT(...) FILTER (WHERE ...) do PostgreSQL.</description>
+        <query><![CDATA[
+            select cv.nome_oficial                                              as caverna,
+                   count(e.id)                                                  as expedicoes,
+                   count(e.id) filter (where e.situacao = 'CONCLUIDA')          as concluidas,
+                   coalesce(sum(e.orcamento_aprovado), 0)                       as orcamento_total,
+                   coalesce(sum(e.custo_realizado), 0)                          as custo_total,
+                   round(100 * sum(e.custo_realizado) / nullif(sum(e.orcamento_aprovado), 0), 1)
+                                                                                as percentual_executado
+            from caverna cv
+            left join expedicao e on e.caverna_id = cv.id
+            group by cv.id, cv.nome_oficial
+            order by cv.nome_oficial
+        ]]></query>
+    </named-native-query>
+    <sql-result-set-mapping name="RankingPesquisador">
+        <constructor-result target-class="br.edu.ifpb.pweb3.turmalina.consulta.dto.RankingPesquisador">
+            <column name="posicao" class="java.lang.Long"/>
+            <column name="nome" class="java.lang.String"/>
+            <column name="coletas" class="java.lang.Long"/>
+            <column name="amostras" class="java.lang.Long"/>
+        </constructor-result>
+    </sql-result-set-mapping>
+    <sql-result-set-mapping name="ResumoCaverna">
+        <constructor-result target-class="br.edu.ifpb.pweb3.turmalina.consulta.dto.ResumoCaverna">
+            <column name="caverna" class="java.lang.String"/>
+            <column name="expedicoes" class="java.lang.Long"/>
+            <column name="concluidas" class="java.lang.Long"/>
+            <column name="orcamento_total" class="java.math.BigDecimal"/>
+            <column name="custo_total" class="java.math.BigDecimal"/>
+            <column name="percentual_executado" class="java.math.BigDecimal"/>
+        </constructor-result>
+    </sql-result-set-mapping>
 </entity-mappings>

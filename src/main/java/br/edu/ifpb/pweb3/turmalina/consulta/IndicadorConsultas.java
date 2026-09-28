@@ -1,10 +1,10 @@
 package br.edu.ifpb.pweb3.turmalina.consulta;
 
-import br.edu.ifpb.pweb3.turmalina.consulta.dto.RankingPesquisador;
-import jakarta.persistence.EntityManager;
-
 import java.util.List;
 import java.util.Objects;
+
+import br.edu.ifpb.pweb3.turmalina.consulta.dto.RankingPesquisador;
+import jakarta.persistence.EntityManager;
 
 public class IndicadorConsultas {
 

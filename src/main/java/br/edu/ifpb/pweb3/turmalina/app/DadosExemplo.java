@@ -36,15 +36,15 @@ import br.edu.ifpb.pweb3.turmalina.dominio.valor.Endereco;
 import br.edu.ifpb.pweb3.turmalina.dominio.valor.Localizacao;
 import jakarta.persistence.EntityManager;
 
-public final class DadosExemplo {
+final class DadosExemplo {
 
-    public record Ids(Long expedicaoConcluida, Long coletaComAmostras, Long equipamentoMovimentado) {
+    record Ids(Long expedicaoConcluida, Long coletaComAmostras, Long equipamentoMovimentado) {
     }
 
     private DadosExemplo() {
     }
 
-    public static Ids popular(EntityManager em) {
+    static Ids popular(EntityManager em) {
         LocalDate hoje = LocalDate.now();
         Instant agora = Instant.now();
 
