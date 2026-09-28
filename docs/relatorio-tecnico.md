@@ -12,10 +12,9 @@ completo está em [diagrama-classes.md](diagrama-classes.md).
 
 Nenhum conceito do enunciado foi omitido.
 
-As decisões deste relatório valem para o modelo completo. Já estão implementados os cadastros (Caverna,
-Setor, Pessoa, Pesquisador, GuiaEspeleologia, Localizacao e Endereco), Equipamento e as enumerações. As
-demais entidades, as consultas e o `pos-criacao.sql` entram nas próximas etapas, e este relatório é
-atualizado junto com elas.
+As decisões deste relatório valem para o modelo completo, e as 14 entidades já estão implementadas. As
+consultas, o `orm.xml` e o `pos-criacao.sql` entram nas próximas etapas, e este relatório é atualizado junto
+com eles.
 
 ## 2. Herança: `InheritanceType.JOINED`
 
@@ -96,8 +95,8 @@ mapeamento.
   - `EntidadeBase.equals` compara o id e a raiz da hierarquia, lida do proxy sem inicializá-lo;
   - as regras de domínio comparam referências LAZY com `mesmaEntidade` (mesma instância ou mesmo id).
 
-  Meta: adicionar um participante deve custar 1 SQL, só para carregar as participações. A contagem será
-  conferida no teste de integração da expedição, quando a participação for incorporada.
+  Resultado: adicionar um participante custa 1 SQL, só para carregar as participações (medido em
+  `ExpedicaoIT` com `Statistics.getPrepareStatementCount()`).
 
 ## 6. Consultas (enunciado, seção 9)
 

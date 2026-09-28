@@ -1,6 +1,6 @@
 # Verificação das entregas de Alan
 
-Data: 27/09/2026. Referência: código de Alan na referência técnica da equipe (pacote de 27/09). Os fontes são
+Datas: 27 e 28/09/2026. Referência: código de Alan na referência técnica da equipe (pacote de 27/09). Os fontes são
 incorporados dessa referência etapa por etapa, e não recriados do zero; cada etapa é verificada antes do commit.
 
 ## Etapas
@@ -9,6 +9,8 @@ incorporados dessa referência etapa por etapa, e não recriados do zero; cada e
 |---|---|---|
 | 1 | Enums `SituacaoExpedicao`, `PapelParticipante` e `SituacaoAutorizacao` | Valores conferidos contra [diagrama-classes.md](diagrama-classes.md); `./mvnw -B -Pintegracao verify`: 47 testes sem banco e 18 com PostgreSQL aprovados |
 | 1 | Relatório técnico (`relatorio-tecnico.md`) | Afirmações sobre o que já existe conferidas contra o código da `main`; trechos que citavam arquivos, classes ou medições ainda inexistentes foram ajustados (abaixo) |
+| 2 | `Expedicao`, `PlanoSeguranca`, `AutorizacaoAmbiental` e `Participacao`, junto com as entidades de coleta, amostra, relatório final e movimentação | Com as 14 entidades o esquema é criado sem erro no PostgreSQL; `./mvnw -B -Pintegracao verify`: 47 testes sem banco e 18 com PostgreSQL aprovados |
+| 2 | `ExpedicaoTest` (15 testes) e `ExpedicaoIT` (6 testes) | `./mvnw -B -Pintegracao verify`: 62 testes sem banco e 24 com PostgreSQL aprovados; cada regra foi conferida também com uma falha forçada (abaixo) |
 
 ## Ajustes no relatório de referência
 
@@ -25,10 +27,43 @@ pronto o que ainda não existe neste repositório:
   (indicadores em SQL nativo) dependem de consultas ainda não incorporadas. Foram retirados até existirem;
   o texto mantém a decisão de externalizar as consultas no `orm.xml`.
 - **Medições da participação:** "6 SQL para 4 participantes" e "adicionar um participante custa 1 SQL"
-  foram medidos fora deste repositório. Viraram meta, a ser comprovada no teste de integração da expedição.
+  foram medidos fora deste repositório. Viraram meta, comprovada na etapa 2 (ver "Testes do núcleo").
 - **Limpeza de objetos grandes:** o texto descrevia a remoção de todos os LOs após a recriação do esquema,
   que no script de referência alcança os LOs do banco inteiro (falha L03). Ficou registrada a regra
   correta, restrita aos objetos da aplicação, que será implementada junto com o `pos-criacao.sql`.
+
+## Testes do núcleo
+
+`ExpedicaoTest` verifica as regras do agregado sem banco: plano obrigatório e vinculado dos dois lados, plano que já
+pertence a outra expedição, período e vagas válidos, setores só da caverna da expedição, limite de participantes,
+pessoa repetida, confirmação antes da presença, transições de situação (autorização vigente e dentro da validade,
+ordem das etapas, cancelamento), uma única autorização vigente, relatório final só após a conclusão e coleções
+protegidas.
+
+`ExpedicaoIT` verifica no PostgreSQL:
+
+- plano gravado por cascata, situação gravada como texto (`PLANEJADA`) e tipos nativos: `timestamp without time zone`
+  para data e hora, `numeric`, `boolean`, `date` e `oid` para os arquivos binários;
+- plano obrigatório e exclusivo: compartilhar o plano de outra expedição viola `uk_expedicao_plano` (23505) e
+  retirar o plano viola o `NOT NULL` (23502);
+- mesma pessoa duas vezes na mesma expedição rejeitada por `uk_participacao_expedicao_pessoa` (23505);
+- adicionar um participante executa 1 comando SQL (a carga das participações), medido com
+  `Statistics.getPrepareStatementCount()`, e o limite de participantes continua valendo depois de recarregar;
+- transições de situação persistidas e custo negativo rejeitado pela restrição da tabela (23514);
+- mapa de rota, PDF da autorização e arquivo do relatório não são carregados junto com a expedição nem com a
+  própria entidade; só quando o arquivo é pedido.
+
+Para confirmar que os testes detectam erro de verdade, cada regra foi quebrada temporariamente e o código foi
+restaurado em seguida:
+
+| Alteração forçada | Teste que falhou |
+|---|---|
+| Limite de participantes desligado em `Expedicao.adicionarParticipante` | `ExpedicaoTest.limitaQuantidadeDeParticipantes` |
+| `@Basic(fetch = LAZY)` retirado do mapa de rota | `ExpedicaoIT.naoCarregaArquivosBinariosJuntoComAExpedicao` |
+| Unicidade (expedição, pessoa) retirada de `Participacao` | `ExpedicaoIT.impedeMesmaPessoaDuasVezesNoPostgres` |
+
+Ficam para as próximas etapas: a autorização vigente única no banco (índice parcial do `pos-criacao.sql`), a troca
+de plano rejeitada que desfaz o vínculo antigo (L01) e a remoção de setor com coleta (L02).
 
 ## Conferido sem ajuste
 
