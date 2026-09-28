@@ -74,7 +74,6 @@ Os aproximadamente 33% por integrante representam estimativa de esforço, não n
 
 ## Organização e desenvolvimento
 
-- [Guia para Alan e Ícaro](docs/guia-alan-icaro.md): uso do setup, dependências, etapas e fluxo Git.
 - [Diagrama de classes completo](docs/diagrama-classes.md): as 14 entidades, os 2 tipos incorporáveis, associações, cardinalidades, enums e unicidades.
 - [UML inicial dos cadastros](docs/diagrama-cadastros.md): desenho registrado antes da incorporação das classes de Victor.
 - [Verificações das entregas de Victor](docs/validacao-victor.md): resultados e ajuste reproduzido na referência.
