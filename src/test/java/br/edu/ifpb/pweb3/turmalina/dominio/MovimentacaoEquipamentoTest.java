@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -21,6 +20,9 @@ import br.edu.ifpb.pweb3.turmalina.dominio.valor.Localizacao;
 
 class MovimentacaoEquipamentoTest {
 
+    private final Instant retiradaFixa = Instant.parse("2026-08-10T08:00:00Z");
+    private final Instant previsaoFixa = Instant.parse("2026-08-15T18:00:00Z");
+
     private Pessoa criarPessoaValida() {
         Endereco endereco = new Endereco("Rua A", "10", null, "Centro", "João Pessoa", UnidadeFederativa.PB, "58000-000");
         return new Pessoa("Carlos", "333.444.555-66", LocalDate.of(1992, 5, 15), "carlos@ifpb.edu.br", "(83) 97777-2222", endereco);
@@ -28,7 +30,7 @@ class MovimentacaoEquipamentoTest {
 
     private Equipamento criarEquipamentoValido() {
         return new Equipamento("PAT-500", "Detector Multigás", TipoEquipamento.ILUMINACAO, 
-                "MSA", new BigDecimal("3000.00"), LocalDate.now().minusMonths(3), false);
+                "MSA", new BigDecimal("3000.00"), LocalDate.of(2026, 1, 10), false);
     }
 
     private Expedicao criarExpedicaoValida() {
@@ -36,7 +38,7 @@ class MovimentacaoEquipamentoTest {
                 new Localizacao(new BigDecimal("-7.12"), new BigDecimal("-34.88"), DatumGeodesico.SIRGAS_2000));
         PlanoSeguranca plano = new PlanoSeguranca("Resgate manual", "Base", 120, "193", true);
         return new Expedicao("EXP-03", "Expedição C", "Análise", caverna, 
-                LocalDateTime.now(), LocalDateTime.now().plusDays(10), new BigDecimal("8000.00"), 5, plano);
+                LocalDateTime.of(2026, 8, 10, 8, 0), LocalDateTime.of(2026, 8, 20, 18, 0), new BigDecimal("8000.00"), 5, plano);
     }
 
     @Test
@@ -45,19 +47,16 @@ class MovimentacaoEquipamentoTest {
         Equipamento equipamento = criarEquipamentoValido();
         Pessoa pessoa = criarPessoaValida();
 
-        Instant agora = Instant.now();
-        Instant previsao = agora.plus(5, ChronoUnit.DAYS);
-
         MovimentacaoEquipamento mov = new MovimentacaoEquipamento(
-                expedicao, equipamento, pessoa, agora, previsao, EstadoEquipamento.BOM);
+                expedicao, equipamento, pessoa, retiradaFixa, previsaoFixa, EstadoEquipamento.BOM);
 
         assertFalse(mov.isDevolvido());
 
-        Instant devolucao = agora.plus(4, ChronoUnit.DAYS);
-        mov.registrarDevolucao(devolucao, EstadoEquipamento.DANIFICADO, new BigDecimal("150.00"));
+        Instant devolucaoFixa = Instant.parse("2026-08-14T15:00:00Z");
+        mov.registrarDevolucao(devolucaoFixa, EstadoEquipamento.DANIFICADO, new BigDecimal("150.00"));
 
         assertTrue(mov.isDevolvido());
-        assertEquals(devolucao, mov.getDevolucaoEfetiva());
+        assertEquals(devolucaoFixa, mov.getDevolucaoEfetiva());
         assertEquals(EstadoEquipamento.DANIFICADO, mov.getEstadoRetorno());
         assertEquals(new BigDecimal("150.00"), mov.getCustoAvaria());
     }
@@ -68,13 +67,10 @@ class MovimentacaoEquipamentoTest {
         Equipamento equipamento = criarEquipamentoValido();
         Pessoa pessoa = criarPessoaValida();
 
-        Instant agora = Instant.now();
-        Instant previsao = agora.plus(5, ChronoUnit.DAYS);
-
         MovimentacaoEquipamento mov = new MovimentacaoEquipamento(
-                expedicao, equipamento, pessoa, agora, previsao, EstadoEquipamento.BOM);
+                expedicao, equipamento, pessoa, retiradaFixa, previsaoFixa, EstadoEquipamento.BOM);
 
-        Instant devolucaoInvalida = agora.minus(1, ChronoUnit.DAYS);
+        Instant devolucaoInvalida = Instant.parse("2026-08-09T08:00:00Z");
 
         assertThrows(IllegalArgumentException.class, () -> 
                 mov.registrarDevolucao(devolucaoInvalida, EstadoEquipamento.BOM, BigDecimal.ZERO));

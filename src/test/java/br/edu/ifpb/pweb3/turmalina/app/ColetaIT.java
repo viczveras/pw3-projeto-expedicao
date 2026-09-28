@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
@@ -38,13 +39,13 @@ class ColetaIT extends IntegracaoPostgres {
         Pesquisador pesquisador = new Pesquisador("Dra. Ana", "111.222.333-44", LocalDate.of(1985, 3, 20), "ana@ifpb.edu.br", "(83) 99999-0000", endereco, "MAT123", "Espeleologia", Titulacao.DOUTORADO, new BigDecimal("100.00"));
 
         PlanoSeguranca plano = new PlanoSeguranca("Plano Base", "Risco", 100, "999", true);
-        Expedicao expedicao = new Expedicao("EXP-01", "Expedição Turmalina", "Levantamento", caverna, LocalDateTime.now(), LocalDateTime.now().plusDays(5), new BigDecimal("5000.00"), 5, plano);
+        Expedicao expedicao = new Expedicao("EXP-01", "Expedição Turmalina", "Levantamento", caverna, LocalDateTime.of(2026, 8, 10, 8, 0), LocalDateTime.of(2026, 8, 15, 18, 0), new BigDecimal("5000.00"), 5, plano);
         expedicao.abrangerSetor(setor);
 
-        Coleta coleta = expedicao.registrarColeta(setor, pesquisador, LocalDateTime.now(), "Coleta Manual");
+        Coleta coleta = expedicao.registrarColeta(setor, pesquisador, LocalDateTime.of(2026, 8, 11, 10, 0), "Coleta Manual");
         coleta.registrarCondicoes(new BigDecimal("22.5"), new BigDecimal("85.0"), new BigDecimal("10.0"));
 
-        Amostra amostra = new Amostra("AMS-001", CategoriaAmostra.FAUNA, new BigDecimal("500.00"), UnidadeMedida.GRAMA, LocalDate.now(), CondicaoConservacao.INTEGRA, false);
+        Amostra amostra = new Amostra("AMS-001", CategoriaAmostra.FAUNA, new BigDecimal("500.00"), UnidadeMedida.GRAMA, LocalDate.of(2026, 8, 11), CondicaoConservacao.INTEGRA, false);
         coleta.adicionarAmostra(amostra);
 
         transacao(em -> {
@@ -54,10 +55,16 @@ class ColetaIT extends IntegracaoPostgres {
             return null;
         });
 
-        Coleta encontrada = transacao(em -> em.find(Coleta.class, coleta.getId()));
+        transacao(em -> {
+            Coleta encontrada = em.find(Coleta.class, coleta.getId());
+            assertNotNull(encontrada);
+            assertEquals("Coleta Manual", encontrada.getMetodo());
+            
+            // Comprova o carregamento LAZY da coleção de amostras
+            assertFalse(fabrica().getPersistenceUnitUtil().isLoaded(encontrada, "amostras"));
+            return null;
+        });
 
-        assertNotNull(encontrada);
-        assertEquals("Coleta Manual", encontrada.getMetodo());
         assertEquals("numeric", tipoDaColuna("coleta", "umidade_relativa"));
         assertEquals("numeric", tipoDaColuna("amostra", "quantidade"));
     }
@@ -72,14 +79,14 @@ class ColetaIT extends IntegracaoPostgres {
         Pesquisador pesquisador = new Pesquisador("Dr. Bruno", "222.333.444-55", LocalDate.of(1990, 1, 1), "bruno@ifpb.edu.br", "(83) 98888-1111", endereco, "MAT456", "Biologia", Titulacao.MESTRADO, new BigDecimal("100.00"));
 
         PlanoSeguranca plano = new PlanoSeguranca("Plano", "Risco", 10, "999", false);
-        Expedicao expedicao = new Expedicao("EXP-02", "Expedição B", "Pesquisa", caverna, LocalDateTime.now(), LocalDateTime.now().plusDays(2), new BigDecimal("2000.00"), 3, plano);
+        Expedicao expedicao = new Expedicao("EXP-02", "Expedição B", "Pesquisa", caverna, LocalDateTime.of(2026, 8, 10, 8, 0), LocalDateTime.of(2026, 8, 12, 18, 0), new BigDecimal("2000.00"), 3, plano);
         expedicao.abrangerSetor(setor);
 
-        Coleta coleta1 = expedicao.registrarColeta(setor, pesquisador, LocalDateTime.now(), "Raspagem");
-        Coleta coleta2 = expedicao.registrarColeta(setor, pesquisador, LocalDateTime.now(), "Filtração");
+        Coleta coleta1 = expedicao.registrarColeta(setor, pesquisador, LocalDateTime.of(2026, 8, 11, 9, 0), "Raspagem");
+        Coleta coleta2 = expedicao.registrarColeta(setor, pesquisador, LocalDateTime.of(2026, 8, 11, 14, 0), "Filtração");
         
-        Amostra am1 = new Amostra("AMS-DUP", CategoriaAmostra.AGUA, new BigDecimal("100.00"), UnidadeMedida.MILILITRO, LocalDate.now(), CondicaoConservacao.INTEGRA, false);
-        Amostra am2 = new Amostra("AMS-DUP", CategoriaAmostra.SEDIMENTO, new BigDecimal("200.00"), UnidadeMedida.GRAMA, LocalDate.now(), CondicaoConservacao.INTEGRA, false);
+        Amostra am1 = new Amostra("AMS-DUP", CategoriaAmostra.AGUA, new BigDecimal("100.00"), UnidadeMedida.MILILITRO, LocalDate.of(2026, 8, 11), CondicaoConservacao.INTEGRA, false);
+        Amostra am2 = new Amostra("AMS-DUP", CategoriaAmostra.SEDIMENTO, new BigDecimal("200.00"), UnidadeMedida.GRAMA, LocalDate.of(2026, 8, 11), CondicaoConservacao.INTEGRA, false);
 
         coleta1.adicionarAmostra(am1);
 
