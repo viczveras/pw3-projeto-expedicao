@@ -60,7 +60,6 @@ class ColetaIT extends IntegracaoPostgres {
             assertNotNull(encontrada);
             assertEquals("Coleta Manual", encontrada.getMetodo());
             
-            // Comprova o carregamento LAZY da coleção de amostras
             assertFalse(fabrica().getPersistenceUnitUtil().isLoaded(encontrada, "amostras"));
             return null;
         });
