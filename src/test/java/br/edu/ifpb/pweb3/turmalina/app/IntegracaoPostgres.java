@@ -34,7 +34,7 @@ public abstract class IntegracaoPostgres {
         executarDdl("create schema " + esquema);
         esquemaCriado = true;
         Map<String, Object> propriedades = new HashMap<>(Configuracao.recriacaoDoEsquema(scriptPosCriacao()));
-        propriedades.put("jakarta.persistence.jdbc.url", URL + (URL.contains("?") ? "&" : "?") + "currentSchema=" + esquema);
+        propriedades.put("jakarta.persistence.jdbc.url", URL + (URL.contains("?") ? "&" : "?") + "currentSchema=" + esquema + ",public");
         propriedades.put("jakarta.persistence.jdbc.user", USUARIO);
         propriedades.put("jakarta.persistence.jdbc.password", SENHA);
         propriedades.put("hibernate.default_schema", esquema);

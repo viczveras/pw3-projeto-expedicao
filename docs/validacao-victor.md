@@ -14,6 +14,18 @@ Data: 27/09/2026. Referência: setup no commit `84b288071bab8af9867a789b1d681e8c
 | 6 | Testes de integração de pessoas, base comum `IntegracaoPostgres` e correção do rollback dos testes | Falha forçada em `EntidadeBase.equals` travou a suíte antes da correção e passou a falhar em 10 s depois dela; `./mvnw -B -Pintegracao verify`: 42 + 13 testes aprovados |
 | 7 | Diagrama de classes completo, registrado antes das partes de Alan e Ícaro | Atributos, tipos e valores dos enums das 16 classes conferidos por script contra o código de referência do setup |
 | 8 | Recriação do esquema com script pós-criação (testes e demonstração) e configuração da demonstração | Sem `currentSchema`, o script falhou com `relation "setor" does not exist`; com o ajuste, `./mvnw -B -Pintegracao verify`: 45 + 15 testes aprovados |
+| 9 | Console de consultas ao vivo (`ConsoleConsultas`, perfil Maven `console`) e busca do `public` nos testes | Sessão roteirizada de 11 comandos no banco de testes sem erro; `./mvnw -B -Pintegracao verify`: 70 + 40 testes aprovados com o banco de testes limpo e com a extensão `lo` já instalada no `public` |
+
+## Console de consultas
+
+O `ConsoleConsultas` veio do código de referência com dois ajustes ao projeto real, ambos encontrados ao executá-lo:
+
+- A referência definia `jakarta.persistence.schema-generation.scripts.action=none`. Quando uma configuração de geração de esquema do JPA está presente, o Hibernate ignora `hibernate.hbm2ddl.auto`, e o `:recriar` não criava as tabelas (`relation "caverna" does not exist`). A linha foi removida: no projeto real ela não tem função, porque o `persistence.xml` não gera arquivo de esquema.
+- O `:recriar` passou a usar `Configuracao.recriacaoDoEsquema`, a mesma recriação da demonstração e dos testes. Assim o banco recriado recebe o script pós-criação; na sessão de verificação, o índice `uk_autorizacao_vigente_por_expedicao` estava presente.
+
+A sessão de verificação executou `:recriar`, `:consultas`, SQL nativo, `:mostrarsql`, as consultas nomeadas dos casos 1, 3 e 5, uma JPQL digitada e o ranking em SQL nativo, cada consulta com 1 comando SQL.
+
+Durante essa verificação, o console e a demonstração foram executados no banco de testes, o que instalou a extensão `lo` no esquema `public`. Os testes de integração passaram a falhar com `function lo_manage() does not exist`: o `CREATE EXTENSION IF NOT EXISTS lo` do script não faz nada quando a extensão já existe, e o esquema isolado do teste não enxergava o `public`. `IntegracaoPostgres` passou a conectar com `currentSchema=<esquema do teste>,public`: as tabelas continuam resolvidas primeiro no esquema isolado, e as funções da extensão são encontradas onde estiverem.
 
 ## Script pós-criação nos testes de integração
 

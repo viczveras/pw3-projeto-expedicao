@@ -62,6 +62,36 @@ A demonstração usa outra configuração, `Configuracao.propriedadesDaDemonstra
 
 Para mudar porta ou credenciais do Compose, copie `.env.example` para `.env`. Na execução local, a conexão pode ser trocada pelas variáveis `TURMALINA_DB_URL`, `TURMALINA_DB_USER` e `TURMALINA_DB_PASSWORD`. Para encerrar o ambiente: `docker compose --profile test down`.
 
+## Console de consultas ao vivo
+
+O console executa consultas no banco sem recompilar e mostra o resultado em tabela e, quando pedido, o SQL gerado pelo Hibernate com a quantidade de comandos:
+
+```bash
+docker compose up -d --wait postgres
+./mvnw -q -Pconsole compile exec:java
+```
+
+| Comando | O que faz |
+|---|---|
+| `<JPQL>;` | executa JPQL digitada na hora (pode ocupar várias linhas; termina com `;`) |
+| `:sql <comando>;` | executa SQL nativo do PostgreSQL (`:sql` sozinho troca de modo; `:jpql` volta) |
+| `:consultas` | lista as consultas nomeadas do `orm.xml`, com seus parâmetros |
+| `:ver <nome>` | mostra o texto de uma consulta nomeada |
+| `:x <nome> [p=valor ...]` | executa uma consulta nomeada; parâmetros não informados são perguntados |
+| `:arquivos` / `:a <arquivo>` | lista e executa as consultas salvas na pasta `consultas/` |
+| `:mostrarsql on\|off` | exibe ou oculta o SQL gerado |
+| `:pagina <n> [tamanho]` | pagina as próximas consultas |
+| `:recriar` | recria o esquema, executa o script pós-criação e carrega os dados de exemplo |
+| `:ajuda` / `:sair` | lista os comandos / encerra |
+
+Formatos de parâmetro: `2026-08-10`, `2026-08-10T07:00`, `agora`, `agora+7d`, enums pelo nome (`CONCLUIDA`), listas separadas por vírgula (`PLANEJADA,CONCLUIDA`) e entidades pelo id. Exemplo:
+
+```
+:x Coleta.listarPorExpedicaoComSetorEPesquisador expedicaoId=1
+```
+
+Ao iniciar, o console só cria o esquema se as tabelas não existirem. `:recriar` e `--recriar` apagam os dados do banco configurado: use-os no banco de desenvolvimento ou de demonstração.
+
 ## Divisão de trabalho
 
 | Integrante | Frente | Responsabilidades |
@@ -88,8 +118,7 @@ Cada etapa deve compilar e passar nas verificações disponíveis antes do commi
 
 ## Entregas seguintes de Victor
 
-1. Revisar a remoção de setores e sua interação com as futuras expedições/coletas; a remoção herdada da referência ainda não foi revisada nesta etapa.
-2. Integrar o console quando as consultas de Alan e Ícaro estiverem disponíveis.
-3. Atualizar o README final da entrega.
+1. Revisar a remoção de setores e sua interação com as expedições e coletas (falha L02, com Alan e Ícaro).
+2. Atualizar o README final da entrega.
 
 As funcionalidades completas presentes no setup não devem ser confundidas com o que já foi incorporado aqui. As lacunas identificadas na revisão do setup precisam de testes e correções durante a implementação.
