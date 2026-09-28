@@ -1,4 +1,4 @@
-# Relatório técnico — TurmalinaPB
+# Relatório técnico  TurmalinaPB
 
 Justificativas das decisões de mapeamento objeto-relacional (enunciado, seção 11).
 Pilha: Java 21, Jakarta Persistence 3.1, Hibernate ORM 6.6 e PostgreSQL 17.
