@@ -45,6 +45,12 @@
             </properties>
         </profile>
         <profile>
+            <id>demonstracao</id>
+            <properties>
+                <exec.mainClass>br.edu.ifpb.pweb3.turmalina.app.Demonstracao</exec.mainClass>
+            </properties>
+        </profile>
+        <profile>
             <id>integracao</id>
             <build>
                 <plugins>
