@@ -1,0 +1,4 @@
+select pq.nome, pq.areaPrincipalPesquisa, pq.titulacao
+from Pesquisador pq
+where exists (select c from Coleta c where c.pesquisadorResponsavel = pq)
+order by pq.nome;

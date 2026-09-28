@@ -1,0 +1,3 @@
+select e.codigo, e.titulo, e.orcamentoAprovado
+from Expedicao e
+where e.orcamentoAprovado >= all (select x.orcamentoAprovado from Expedicao x);

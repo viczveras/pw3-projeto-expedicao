@@ -1,5 +1,15 @@
 package br.edu.ifpb.pweb3.turmalina.app;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.function.Function;
+
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
+
 import br.edu.ifpb.pweb3.turmalina.consulta.ArquivoConsultas;
 import br.edu.ifpb.pweb3.turmalina.consulta.ColetaConsultas;
 import br.edu.ifpb.pweb3.turmalina.consulta.EquipamentoConsultas;
@@ -14,15 +24,6 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.Persistence;
-import org.hibernate.SessionFactory;
-import org.hibernate.stat.Statistics;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.function.Function;
 
 public final class Demonstracao {
 
@@ -36,7 +37,7 @@ public final class Demonstracao {
 
     public static void main(String[] args) {
         try (EntityManagerFactory emf = Persistence.createEntityManagerFactory(
-                Configuracao.UNIDADE_PERSISTENCIA, Configuracao.propriedadesDoAmbiente())) {
+                Configuracao.UNIDADE_PERSISTENCIA, Configuracao.propriedadesDaDemonstracao())) {
             new Demonstracao(emf).executar();
         }
     }
