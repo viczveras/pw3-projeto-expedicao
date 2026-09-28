@@ -32,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -83,6 +84,26 @@ class ExpedicaoIT extends IntegracaoPostgres {
 
         exigirSqlState(compartilhado, "23505");
         exigirSqlState(semPlano, "23502");
+    }
+
+    @Test
+    void trocarOPlanoApagaOAntigoPorOrphanRemoval() {
+        Long id = transacao(em -> novaExpedicao(em, 5).getId());
+        Long antigo = transacao(em -> em.find(Expedicao.class, id).getPlanoSeguranca().getId());
+
+        Long novo = transacao(em -> {
+            PlanoSeguranca plano = new PlanoSeguranca("Sair pela entrada lateral", "Estacionamento", 90,
+                    "83999990000", false);
+            em.find(Expedicao.class, id).definirPlanoSeguranca(plano);
+            em.flush();
+            return plano.getId();
+        });
+
+        transacao(em -> {
+            assertNull(em.find(PlanoSeguranca.class, antigo));
+            assertEquals(novo, em.find(Expedicao.class, id).getPlanoSeguranca().getId());
+            return null;
+        });
     }
 
     @Test
