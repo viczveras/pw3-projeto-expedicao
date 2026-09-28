@@ -15,6 +15,10 @@ incorporados dessa referência etapa por etapa, e não recriados do zero; cada e
 | 3 | `ExpedicaoConsultas`, `ArquivoConsultas` e `ExpedicaoConsultasIT` (6 testes) | Contagem de comandos SQL de cada caso (abaixo); 70 testes sem banco e 33 com PostgreSQL aprovados |
 | 3 | `pos-criacao.sql` com a correção da L03 e `ObjetosGrandesIT` (2 testes) | Teste de reprodução falhou com o script da referência e passou após a correção (abaixo); o script roda em todas as classes com banco: 70 testes sem banco e 35 com PostgreSQL aprovados |
 | 3 | Autorização vigente única no banco (`ExpedicaoIT`, 1 teste) | Segunda autorização `VIGENTE` da mesma expedição rejeitada pelo índice parcial (23505); 70 testes sem banco e 36 com PostgreSQL aprovados |
+| 4 | Correção da L01 em `definirPlanoSeguranca` e `anexarRelatorioFinal` | Testes de reprodução em `ExpedicaoTest` falharam antes da correção e passaram depois (abaixo); `ExpedicaoIT` confirma a remoção do plano antigo por `orphanRemoval`; 73 testes sem banco e 45 com PostgreSQL aprovados |
+| 4 | Correção da L02 em `deixarDeAbrangerSetor` | Teste de reprodução em `ExpedicaoTest` falhou antes da correção; `ExpedicaoIT` confirma a regra a partir do banco; 74 testes sem banco e 46 com PostgreSQL aprovados |
+| 4 | Revisão final de `relatorio-tecnico.md` | Cada afirmação conferida contra o código e as evidências: 12 consultas JPQL e 2 nativas no `orm.xml`, contagem de comandos de `evidencias-sql.md`, console e roteiro de consultas ao vivo |
+| 4 | Decisões D01, D02 e D03 (seção 8 do relatório) | Comportamento do código conferido e mantido: filtro de disponibilidade em `EquipamentoConsultas`, `nullable` e construtores dos quatro arquivos binários, regras de `registrarColeta`; nenhum teste alterado |
 
 ## Ajustes no relatório de referência
 
@@ -119,6 +123,30 @@ autorização vigente.
 |---|---|
 | Índice parcial retirado do script | `ExpedicaoIT.aceitaUmaUnicaAutorizacaoVigentePorExpedicaoNoPostgres` |
 | Limpeza global (`lo_unlink` sem filtro) de volta ao script | `ObjetosGrandesIT.recriarOEsquemaPreservaObjetosGrandesDeForaDaAplicacao` |
+
+## Falhas L01 e L02
+
+**L01: troca rejeitada deixava a associação inconsistente.** Sequência: criar duas expedições, cada uma com o
+seu plano, e tentar definir na primeira o plano da segunda. `definirPlanoSeguranca` desvinculava o plano atual
+antes de o novo recusar o vínculo; a exceção saía, a primeira expedição continuava apontando para o plano antigo,
+mas `planoAntigo.getExpedicao()` ficava nulo. `anexarRelatorioFinal` tinha o mesmo padrão, e um relatório nulo
+também desfazia o vínculo anterior antes do erro. Antes da correção, `ExpedicaoTest.trocaDePlanoRejeitadaPreservaOsDoisVinculos`
+e `ExpedicaoTest.trocaDeRelatorioRejeitadaPreservaOsDoisVinculos` falharam (`expected: <Expedicao#null> but was: <null>`).
+
+Correção: o novo plano (ou relatório) é validado com `vincular` antes de o antigo ser desvinculado, e o relatório
+nulo é recusado logo no início. A troca válida continua funcionando (`trocaOPlanoPorOutroAindaSemExpedicao`), e
+no PostgreSQL o plano substituído é apagado por `orphanRemoval`
+(`ExpedicaoIT.trocarOPlanoApagaOAntigoPorOrphanRemoval`).
+
+**L02: setor com coleta podia deixar a expedição.** Sequência: abranger um setor, registrar uma coleta nele e
+chamar `deixarDeAbrangerSetor`. O setor saía da expedição e a coleta ficava num setor que a expedição não abrange
+mais, contrariando a regra de que a coleta ocorre em setor abrangido. Antes da correção,
+`ExpedicaoTest.naoDeixaDeAbrangerSetorComColetaRegistrada` falhou (nenhuma exceção lançada).
+
+Correção: `deixarDeAbrangerSetor` recusa a remoção enquanto houver coleta naquele setor, comparando as
+referências com `mesmaEntidade`, sem inicializar os proxies. Setores sem coleta continuam removíveis.
+`ExpedicaoIT.mantemNaExpedicaoOSetorComColetaRegistrada` confirma a regra com os dados carregados do banco. O lado
+da caverna (remover da caverna um setor em uso) é recusado pelas chaves estrangeiras, conforme `RemocaoSetorIT`.
 
 ## Conferido sem ajuste
 

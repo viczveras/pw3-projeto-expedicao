@@ -140,15 +140,19 @@ public class Expedicao extends EntidadeBase {
     }
 
     public void deixarDeAbrangerSetor(Setor setor) {
+        if (coletas.stream().anyMatch(c -> mesmaEntidade(c.getSetor(), setor))) {
+            throw new IllegalStateException("O setor " + setor.getDenominacao()
+                    + " tem coleta registrada nesta expedição");
+        }
         setores.remove(setor);
     }
 
     public void definirPlanoSeguranca(PlanoSeguranca plano) {
         Objects.requireNonNull(plano, "A expedição exige um plano de segurança");
-        if (this.planoSeguranca != null) {
+        plano.vincular(this);
+        if (this.planoSeguranca != null && this.planoSeguranca != plano) {
             this.planoSeguranca.desvincular();
         }
-        plano.vincular(this);
         this.planoSeguranca = plano;
     }
 
@@ -196,13 +200,14 @@ public class Expedicao extends EntidadeBase {
     }
 
     public void anexarRelatorioFinal(RelatorioFinal relatorio) {
+        Objects.requireNonNull(relatorio, "Informe o relatório final");
         if (situacao != SituacaoExpedicao.CONCLUIDA) {
             throw new IllegalStateException("O relatório final só pode ser anexado a expedição concluída");
         }
-        if (this.relatorioFinal != null) {
+        relatorio.vincular(this);
+        if (this.relatorioFinal != null && this.relatorioFinal != relatorio) {
             this.relatorioFinal.desvincular();
         }
-        relatorio.vincular(this);
         this.relatorioFinal = relatorio;
     }
 

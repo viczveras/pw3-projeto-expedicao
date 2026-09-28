@@ -4,13 +4,17 @@ import br.edu.ifpb.pweb3.turmalina.dominio.AutorizacaoAmbiental;
 import br.edu.ifpb.pweb3.turmalina.dominio.Caverna;
 import br.edu.ifpb.pweb3.turmalina.dominio.Expedicao;
 import br.edu.ifpb.pweb3.turmalina.dominio.Participacao;
+import br.edu.ifpb.pweb3.turmalina.dominio.Pesquisador;
 import br.edu.ifpb.pweb3.turmalina.dominio.Pessoa;
 import br.edu.ifpb.pweb3.turmalina.dominio.PlanoSeguranca;
 import br.edu.ifpb.pweb3.turmalina.dominio.RelatorioFinal;
+import br.edu.ifpb.pweb3.turmalina.dominio.Setor;
 import br.edu.ifpb.pweb3.turmalina.dominio.enums.DatumGeodesico;
+import br.edu.ifpb.pweb3.turmalina.dominio.enums.NivelDificuldade;
 import br.edu.ifpb.pweb3.turmalina.dominio.enums.PapelParticipante;
 import br.edu.ifpb.pweb3.turmalina.dominio.enums.SituacaoAutorizacao;
 import br.edu.ifpb.pweb3.turmalina.dominio.enums.SituacaoExpedicao;
+import br.edu.ifpb.pweb3.turmalina.dominio.enums.Titulacao;
 import br.edu.ifpb.pweb3.turmalina.dominio.enums.UnidadeFederativa;
 import br.edu.ifpb.pweb3.turmalina.dominio.valor.Endereco;
 import br.edu.ifpb.pweb3.turmalina.dominio.valor.Localizacao;
@@ -32,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -83,6 +88,60 @@ class ExpedicaoIT extends IntegracaoPostgres {
 
         exigirSqlState(compartilhado, "23505");
         exigirSqlState(semPlano, "23502");
+    }
+
+    @Test
+    void trocarOPlanoApagaOAntigoPorOrphanRemoval() {
+        Long id = transacao(em -> novaExpedicao(em, 5).getId());
+        Long antigo = transacao(em -> em.find(Expedicao.class, id).getPlanoSeguranca().getId());
+
+        Long novo = transacao(em -> {
+            PlanoSeguranca plano = new PlanoSeguranca("Sair pela entrada lateral", "Estacionamento", 90,
+                    "83999990000", false);
+            em.find(Expedicao.class, id).definirPlanoSeguranca(plano);
+            em.flush();
+            return plano.getId();
+        });
+
+        transacao(em -> {
+            assertNull(em.find(PlanoSeguranca.class, antigo));
+            assertEquals(novo, em.find(Expedicao.class, id).getPlanoSeguranca().getId());
+            return null;
+        });
+    }
+
+    @Test
+    void mantemNaExpedicaoOSetorComColetaRegistrada() {
+        Long[] ids = transacao(em -> {
+            Expedicao expedicao = novaExpedicao(em, 5);
+            Setor setor = expedicao.getCaverna().adicionarSetor(new Setor("Salão principal",
+                    NivelDificuldade.BAIXO, new BigDecimal("12.50"), BigDecimal.TEN, false));
+            expedicao.abrangerSetor(setor);
+            Pesquisador pesquisador = new Pesquisador("Ana Beatriz Lima", String.format("%011d",
+                    ThreadLocalRandom.current().nextLong(1L, 99_999_999_999L)), LocalDate.of(1985, 3, 14),
+                    "teste-" + UUID.randomUUID() + "@turmalina.org", "83999990001",
+                    new Endereco("Av. Primeiro de Maio", "720", null, "Jaguaribe", "João Pessoa",
+                            UnidadeFederativa.PB, "58015-435"),
+                    "REG-" + UUID.randomUUID().toString().substring(0, 20), "Bioespeleologia",
+                    Titulacao.DOUTORADO, new BigDecimal("180.00"));
+            em.persist(pesquisador);
+            expedicao.registrarColeta(setor, pesquisador, INICIO.plusHours(3), "Coleta manual");
+            em.flush();
+            return new Long[]{expedicao.getId(), setor.getId()};
+        });
+
+        transacao(em -> {
+            Expedicao expedicao = em.find(Expedicao.class, ids[0]);
+            Setor setor = em.find(Setor.class, ids[1]);
+            assertThrows(IllegalStateException.class, () -> expedicao.deixarDeAbrangerSetor(setor));
+            return null;
+        });
+
+        transacao(em -> {
+            assertEquals(1L, ((Number) valorNativo(em,
+                    "select count(*) from {h-schema}expedicao_setor where expedicao_id = ?", ids[0])).longValue());
+            return null;
+        });
     }
 
     @Test

@@ -12,9 +12,8 @@ completo está em [diagrama-classes.md](diagrama-classes.md).
 
 Nenhum conceito do enunciado foi omitido.
 
-As decisões deste relatório valem para o modelo completo. As 14 entidades, o `orm.xml`, as consultas de
-expedição e de arquivos e o `pos-criacao.sql` já estão implementados. As consultas de coletas e de
-equipamentos entram nas próximas etapas, e este relatório é atualizado junto com elas.
+Estão implementados as 14 entidades, o `orm.xml` com as consultas dos seis casos do enunciado e os
+indicadores em SQL nativo, o `pos-criacao.sql`, a demonstração e o console de consultas.
 
 ## 2. Herança: `InheritanceType.JOINED`
 
@@ -71,7 +70,9 @@ dos equipamentos não deve sumir junto com a expedição.
 Os métodos de domínio (`adicionarSetor`, `adicionarParticipante`, `registrarColeta`, `adicionarAmostra`,
 `definirPlanoSeguranca`, ...) mantêm os dois lados das associações bidirecionais sincronizados. Eles
 também verificam as regras do agregado: limite de participantes, pessoa duplicada, setor pertencente à
-caverna, coleta apenas em setor abrangido e transições de situação.
+caverna, coleta apenas em setor abrangido e transições de situação. Nas trocas de plano e de relatório, o
+novo objeto é validado antes de o antigo ser desvinculado, então uma troca rejeitada preserva as duas
+associações; e a expedição não deixa de abranger um setor em que já registrou coleta.
 
 ## 5. Estratégia de carregamento
 
@@ -100,7 +101,7 @@ mapeamento.
 
 ## 6. Consultas (enunciado, seção 9)
 
-| # | Caso | Técnica | Comandos SQL esperados |
+| # | Caso | Técnica | Comandos SQL |
 |---|---|---|---|
 | 1 | Listar expedições por período e situação | Projeção `select new ExpedicaoResumo(...)` com `join e.caverna` | 1 |
 | 1b | *Anti-exemplo:* `select e from Expedicao e` + `getCaverna().getNomeOficial()` | — | 1 + N (uma por caverna distinta) |
@@ -109,17 +110,20 @@ mapeamento.
 | 4 | Amostras apenas ao abrir a coleta | Consulta separada, projeção sem a fotografia | 1 |
 | 5 | Equipamentos disponíveis numa faixa de datas | `NOT EXISTS` sobre movimentações, resolvido no banco com índice | 1 |
 | 6 | Baixar mapa, autorização ou relatório | `select p.mapaRota ...` / `select a.arquivoPdf ...` / `select r.arquivo ...`: só a coluna do LOB | 1 cada |
+| 7 | Indicadores (ranking de pesquisadores, resumo financeiro por caverna) | SQL nativo com `dense_rank() over` e `count(...) filter (where ...)`, mapeado para records por `constructor-result` | 1 cada |
 
-A contagem dos casos 1, 1b, 2 e 6 é conferida em `ExpedicaoConsultasIT` com
-`Statistics.getPrepareStatementCount()`, que também confirma que as projeções e os downloads não colocam
-nenhuma entidade no contexto de persistência. A demonstração vai executar cada caso com
-`Configuracao.propriedadesDaDemonstracao()`, que liga `hibernate.show_sql` e as estatísticas do Hibernate.
+A classe `app.Demonstracao` executa cada caso com `Configuracao.propriedadesDaDemonstracao()`, que liga
+`hibernate.show_sql` e as estatísticas do Hibernate, e imprime o número de comandos SQL de cada um
+(`Statistics.getPrepareStatementCount()`). Os casos 1, 1b, 2 e 6 também são conferidos em
+`ExpedicaoConsultasIT`, que confirma que as projeções e os downloads não colocam nenhuma entidade no
+contexto de persistência.
 
 ### Consultas nomeadas externalizadas (`orm.xml`)
 
-O texto das consultas fica em `META-INF/orm.xml` (cabeçalho JPA 3.1), declarado no `persistence.xml`
-com `<mapping-file>`. Isso também atende ao pedido de registrar pelo menos duas consultas nomeadas em
-`orm.xml`. As classes de `consulta/` só chamam `createNamedQuery("<Entidade>.<finalidade>", Tipo.class)`.
+O texto de todas as consultas fica em `META-INF/orm.xml` (cabeçalho JPA 3.1), declarado no
+`persistence.xml` com `<mapping-file>`. São 12 `<named-query>` em JPQL e 2 `<named-native-query>`, o que
+também atende ao pedido de registrar pelo menos duas consultas nomeadas em `orm.xml`. As classes de
+`consulta/` só chamam `createNamedQuery("<Entidade>.<finalidade>", Tipo.class)`.
 
 Motivos:
 - **Separação:** o texto da consulta fica fora do código, então é possível revisá-lo e ajustá-lo sem
@@ -127,12 +131,19 @@ Motivos:
 - **Validação antecipada:** o Hibernate valida todas as consultas JPQL nomeadas ao criar o
   `EntityManagerFactory`. Um erro de sintaxe ou um atributo inexistente impede a aplicação de subir, em
   vez de falhar só quando a consulta é usada.
+- **SQL nativo onde a JPQL não alcança:** função de janela (`dense_rank() over`) e agregação filtrada
+  (`count(...) filter (where ...)`) do PostgreSQL. O resultado vai direto para records via
+  `<sql-result-set-mapping>`/`<constructor-result>`.
+
+O console `app.ConsoleConsultas` lista e executa essas consultas (`:consultas`, `:x`). Ele também executa
+JPQL e SQL digitados na hora, com o SQL gerado; o roteiro está em
+[consultas-ao-vivo.md](consultas-ao-vivo.md).
 
 ### Evidências
 
-O SQL gerado em cada caso, com a contagem de comandos e o resultado, será registrado em
-`evidencias-sql.md` quando as consultas forem incorporadas. O contraste principal é entre o caso 1
-(projeção: 1 comando) e o anti-exemplo 1b (entidades com acesso LAZY à caverna: 1 + N comandos).
+O SQL gerado em cada caso, com a contagem de comandos e o resultado, está em
+[evidencias-sql.md](evidencias-sql.md). O contraste principal é entre o caso 1 (projeção: 1 comando) e
+o anti-exemplo 1b (entidades com acesso LAZY à caverna: 1 + N comandos).
 
 ## 7. Tipos e restrições
 
@@ -164,3 +175,24 @@ O SQL gerado em cada caso, com a contagem de comandos e o resultado, será regis
 - **Restrição fora das anotações:** o índice único parcial `uk_autorizacao_vigente_por_expedicao`
   (`WHERE situacao = 'VIGENTE'`) não é expressável em JPA e fica no `pos-criacao.sql`, executado depois
   da criação das tabelas.
+
+## 8. Decisões de domínio
+
+Três pontos não são resolvidos só pelo enunciado. A equipe decidiu cada um e manteve o código coerente com a
+decisão:
+
+- **D01, equipamento aguardando calibração:** equipamentos `EM_MANUTENCAO`, `BAIXADO` ou
+  `AGUARDANDO_CALIBRACAO` não aparecem como disponíveis (`Equipamento.listarDisponiveisNoPeriodo`). Um
+  instrumento sem calibração compromete a medição científica e a segurança da equipe. Detalhes em
+  [evidencias-sql.md](evidencias-sql.md).
+- **D02, anexos obrigatórios:** o PDF assinado da autorização e o arquivo do relatório final são obrigatórios
+  (`nullable = false` e exigidos no construtor), porque a autorização só vale com o documento assinado e o
+  relatório final é o próprio arquivo. O mapa de rota e a fotografia da amostra são opcionais: o plano e a
+  amostra são registrados antes de esses arquivos existirem, e uma amostra pode não ser fotografada em campo.
+  Quando o arquivo não existe, o download devolve `Optional.empty`.
+- **D03, registro da coleta:** `registrarColeta` exige que a coleta ocorra em um setor abrangido pela
+  expedição, mas não exige que o pesquisador responsável esteja entre os participantes nem que a expedição
+  esteja `EM_ANDAMENTO`. O enunciado pede apenas um pesquisador responsável (seção 7), que pode ser de fora da
+  equipe de campo, e o registro não depende da situação da expedição, para que as coletas possam ser lançadas
+  a partir dos registros de campo mesmo depois da conclusão. A regra que o enunciado impõe continua garantida:
+  a coleta ocorre em setor abrangido, e a expedição não deixa de abranger um setor com coleta.
