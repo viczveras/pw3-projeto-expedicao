@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <entity-mappings xmlns="https://jakarta.ee/xml/ns/persistence/orm"
                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                   xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence/orm
@@ -81,6 +80,43 @@
         <description>Somente a fotografia de uma amostra.</description>
         <query><![CDATA[
             select a.fotografia from Amostra a where a.id = :amostraId
+        ]]></query>
+    </named-query>
+
+    <named-query name="Coleta.listarResumoAmostrasPorExpedicao">
+        <description>Listagem de amostras coletadas em uma expedição.</description>
+        <query><![CDATA[
+            select new br.edu.ifpb.pweb3.turmalina.consulta.dto.AmostraResumo(
+                a.id, a.codigoCampo, a.categoria, a.quantidade, a.unidadeMedida,
+                a.dataAcondicionamento, a.condicaoConservacao, a.materialPerigoso, a.observacoes)
+            from Amostra a
+            join a.coleta c
+            where c.expedicao.id = :expedicaoId
+            order by a.codigoCampo
+        ]]></query>
+    </named-query>
+
+    <named-query name="MovimentacaoEquipamento.listarPorExpedicao">
+        <description>Movimentações registradas em uma expedição específica.</description>
+        <query><![CDATA[
+            select m from MovimentacaoEquipamento m
+            join fetch m.equipamento eq
+            join fetch m.responsavel r
+            where m.expedicao.id = :expedicaoId
+            order by m.retiradaEm
+        ]]></query>
+    </named-query>
+
+    <named-query name="Pesquisador.rankingPorAmostras">
+        <description>Ranking de pesquisadores por total de amostras coletadas.</description>
+        <query><![CDATA[
+            select new br.edu.ifpb.pweb3.turmalina.consulta.dto.RankingPesquisador(
+                p.id, p.nome, count(a.id))
+            from Amostra a
+            join a.coleta c
+            join c.pesquisadorResponsavel p
+            group by p.id, p.nome
+            order by count(a.id) desc, p.nome
         ]]></query>
     </named-query>
 
