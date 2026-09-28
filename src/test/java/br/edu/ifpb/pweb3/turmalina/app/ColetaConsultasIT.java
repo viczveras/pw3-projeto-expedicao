@@ -148,7 +148,7 @@ class ColetaConsultasIT extends IntegracaoPostgres {
 
         transacao(em -> {
             IndicadorConsultas consultas = new IndicadorConsultas(em);
-            List<RankingPesquisador> ranking = contarComandos(1, consultas::rankingPesquisadoresPorAmostras);
+            List<RankingPesquisador> ranking = contarComandos(1, consultas::rankingDePesquisadoresPorAmostras);
 
             assertFalse(ranking.isEmpty());
             assertEquals(1L, ranking.getFirst().posicao());

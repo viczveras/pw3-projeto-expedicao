@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Objects;
 
 import br.edu.ifpb.pweb3.turmalina.consulta.dto.RankingPesquisador;
+import br.edu.ifpb.pweb3.turmalina.consulta.dto.ResumoCaverna;
 import jakarta.persistence.EntityManager;
 
 public class IndicadorConsultas {
@@ -14,8 +15,11 @@ public class IndicadorConsultas {
         this.em = Objects.requireNonNull(em);
     }
 
-    public List<RankingPesquisador> rankingPesquisadoresPorAmostras() {
-        return em.createNamedQuery("Pesquisador.rankingPorAmostras", RankingPesquisador.class)
-                .getResultList();
+    public List<RankingPesquisador> rankingDePesquisadoresPorAmostras() {
+        return em.createNamedQuery("Pesquisador.rankingPorAmostras", RankingPesquisador.class).getResultList();
+    }
+
+    public List<ResumoCaverna> resumoFinanceiroPorCaverna() {
+        return em.createNamedQuery("Caverna.resumoFinanceiro", ResumoCaverna.class).getResultList();
     }
 }
