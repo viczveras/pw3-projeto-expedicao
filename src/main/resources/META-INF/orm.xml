@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<entity-mappings xmlns="https://jakarta.ee/xml/ns/persistence/orm"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence/orm
+                      https://jakarta.ee/xml/ns/persistence/orm/orm_3_1.xsd"
+                  version="3.1">
+
+    <description>Consultas nomeadas (JPQL e SQL nativo) do TurmalinaPB</description>
+
+    <named-query name="Expedicao.listarPorPeriodoESituacao">
+        <description>Expedições cujo período previsto cruza [de, ate] nas situações informadas. Projeção só com as colunas exibidas: 1 SQL, sem N+1.</description>
+        <query><![CDATA[
+            select new br.edu.ifpb.pweb3.turmalina.consulta.dto.ExpedicaoResumo(
+                e.id, e.codigo, e.titulo, c.nomeOficial, e.inicioPrevisto, e.terminoPrevisto, e.situacao)
+            from Expedicao e
+            join e.caverna c
+            where e.inicioPrevisto <= :ate
+              and e.terminoPrevisto >= :de
+              and e.situacao in :situacoes
+            order by e.inicioPrevisto, e.codigo
+        ]]></query>
+    </named-query>
+
+    <named-query name="Expedicao.buscarComCavernaESetores">
+        <description>Uma expedição com caverna e setores via fetch join. Plano, relatório e autorizações continuam LAZY (sem binários).</description>
+        <query><![CDATA[
+            select e from Expedicao e
+            join fetch e.caverna
+            left join fetch e.setores
+            where e.id = :expedicaoId
+        ]]></query>
+    </named-query>
+
+    <named-query name="Participacao.listarResumoPorExpedicao">
+        <description>Participantes e papéis de uma expedição, sem endereço e sem as tabelas das especializações.</description>
+        <query><![CDATA[
+            select new br.edu.ifpb.pweb3.turmalina.consulta.dto.ParticipanteResumo(
+                p.id, pe.id, pe.nome, p.papel, p.dataConfirmacao, p.presencaConfirmada)
+            from Participacao p
+            join p.pessoa pe
+            where p.expedicao.id = :expedicaoId
+            order by p.papel, pe.nome
+        ]]></query>
+    </named-query>
+
+    <named-query name="PlanoSeguranca.mapaRotaPorExpedicao">
+        <description>Somente a coluna do mapa de rota (objeto grande) do plano de uma expedição.</description>
+        <query><![CDATA[
+            select p.mapaRota from Expedicao e
+            join e.planoSeguranca p
+            where e.id = :expedicaoId
+        ]]></query>
+    </named-query>
+
+    <named-query name="AutorizacaoAmbiental.pdfPorExpedicaoESituacao">
+        <description>Somente o PDF da autorização de uma expedição na situação informada (ex.: VIGENTE).</description>
+        <query><![CDATA[
+            select a.arquivoPdf from AutorizacaoAmbiental a
+            where a.expedicao.id = :expedicaoId and a.situacao = :situacao
+        ]]></query>
+    </named-query>
+
+    <named-query name="AutorizacaoAmbiental.pdfPorId">
+        <description>Somente o PDF de uma autorização.</description>
+        <query><![CDATA[
+            select a.arquivoPdf from AutorizacaoAmbiental a where a.id = :autorizacaoId
+        ]]></query>
+    </named-query>
+
+    <named-query name="RelatorioFinal.arquivoPorExpedicao">
+        <description>Somente o arquivo do relatório final de uma expedição.</description>
+        <query><![CDATA[
+            select r.arquivo from Expedicao e
+            join e.relatorioFinal r
+            where e.id = :expedicaoId
+        ]]></query>
+    </named-query>
+
+    <named-query name="Amostra.fotografiaPorId">
+        <description>Somente a fotografia de uma amostra.</description>
+        <query><![CDATA[
+            select a.fotografia from Amostra a where a.id = :amostraId
+        ]]></query>
+    </named-query>
+
+</entity-mappings>
