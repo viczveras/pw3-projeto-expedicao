@@ -13,6 +13,8 @@ incorporados dessa referência etapa por etapa, e não recriados do zero; cada e
 | 2 | `ExpedicaoTest` (15 testes) e `ExpedicaoIT` (6 testes) | `./mvnw -B -Pintegracao verify`: 62 testes sem banco e 24 com PostgreSQL aprovados; cada regra foi conferida também com uma falha forçada (abaixo) |
 | 3 | `orm.xml` com 8 consultas nomeadas, `<mapping-file>` no `persistence.xml` e os DTOs | O `EntityManagerFactory` de todos os testes com banco sobe com as 8 consultas validadas pelo Hibernate; 70 testes sem banco e 27 com PostgreSQL aprovados |
 | 3 | `ExpedicaoConsultas`, `ArquivoConsultas` e `ExpedicaoConsultasIT` (6 testes) | Contagem de comandos SQL de cada caso (abaixo); 70 testes sem banco e 33 com PostgreSQL aprovados |
+| 3 | `pos-criacao.sql` com a correção da L03 e `ObjetosGrandesIT` (2 testes) | Teste de reprodução falhou com o script da referência e passou após a correção (abaixo); o script roda em todas as classes com banco: 70 testes sem banco e 35 com PostgreSQL aprovados |
+| 3 | Autorização vigente única no banco (`ExpedicaoIT`, 1 teste) | Segunda autorização `VIGENTE` da mesma expedição rejeitada pelo índice parcial (23505); 70 testes sem banco e 36 com PostgreSQL aprovados |
 
 ## Ajustes no relatório de referência
 
@@ -32,7 +34,7 @@ pronto o que ainda não existe neste repositório:
   foram medidos fora deste repositório. Viraram meta, comprovada na etapa 2 (ver "Testes do núcleo").
 - **Limpeza de objetos grandes:** o texto descrevia a remoção de todos os LOs após a recriação do esquema,
   que no script de referência alcança os LOs do banco inteiro (falha L03). Ficou registrada a regra
-  correta, restrita aos objetos da aplicação, que será implementada junto com o `pos-criacao.sql`.
+  correta, restrita aos objetos da aplicação, implementada na etapa 3 (ver "Script pós-criação e falha L03").
 
 ## Testes do núcleo
 
@@ -64,8 +66,8 @@ restaurado em seguida:
 | `@Basic(fetch = LAZY)` retirado do mapa de rota | `ExpedicaoIT.naoCarregaArquivosBinariosJuntoComAExpedicao` |
 | Unicidade (expedição, pessoa) retirada de `Participacao` | `ExpedicaoIT.impedeMesmaPessoaDuasVezesNoPostgres` |
 
-Ficam para as próximas etapas: a autorização vigente única no banco (índice parcial do `pos-criacao.sql`), a troca
-de plano rejeitada que desfaz o vínculo antigo (L01) e a remoção de setor com coleta (L02).
+Ficaram para as etapas seguintes: a autorização vigente única no banco (feita na etapa 3, abaixo), a troca de
+plano rejeitada que desfaz o vínculo antigo (L01) e a remoção de setor com coleta (L02).
 
 ## Consultas de expedição e downloads
 
@@ -87,6 +89,36 @@ Falhas forçadas, com o código restaurado em seguida:
 
 Observação: a listagem de participantes ordena por `papel`. Como o enum é gravado como texto (`EnumType.STRING`),
 a ordem é a alfabética do valor gravado (`APOIO_TECNICO`, `COORDENADOR`, `GUIA`...), e não a ordem de declaração.
+
+## Script pós-criação e falha L03
+
+O `pos-criacao.sql` da referência cria o índice único parcial `uk_autorizacao_vigente_por_expedicao`, instala a
+extensão `lo`, cria os gatilhos `lo_manage` dos quatro arquivos binários e executa
+`SELECT lo_unlink(oid) FROM pg_largeobject_metadata`, que apaga todos os objetos grandes do banco.
+
+Sequência que reproduz: criar um objeto grande fora das tabelas da aplicação (`lo_from_bytea`), recriar o
+esquema pelo mesmo caminho dos testes e da demonstração (`Configuracao.recriacaoDoEsquema`) e verificar se o
+objeto continua existindo. Com o script da referência, `ObjetosGrandesIT.recriarOEsquemaPreservaObjetosGrandesDeForaDaAplicacao`
+falhou (`expected: <true> but was: <false>`): o objeto foi apagado. No Docker Compose do projeto o usuário
+`turmalina` é superusuário, então o comando alcança os objetos grandes do banco inteiro, e não só os das
+tabelas recriadas.
+
+Correção: o comando foi retirado do script. O índice parcial, a extensão e os gatilhos continuam;
+`ObjetosGrandesIT.apagaOArquivoAntigoAoSubstituirEAoRemoverALinha` confirma que os gatilhos apagam o arquivo
+antigo ao substituir o mapa de rota e ao remover a expedição. Os LOs que ficam órfãos quando o esquema é
+recriado são removidos com `vacuumlo`, que só apaga LOs sem nenhuma referência no banco. Executado em modo de
+simulação no banco de testes (`vacuumlo -n`), ele listou 11 objetos órfãos deixados por esquemas de teste já
+removidos, sem apagar nada.
+
+`ExpedicaoIT.aceitaUmaUnicaAutorizacaoVigentePorExpedicaoNoPostgres` verifica o índice parcial pelo caminho que o
+domínio não bloqueia: com uma autorização vigente e outra em análise na mesma expedição, mudar a segunda para
+`VIGENTE` com `setSituacao` é rejeitado pelo banco (23505), enquanto outra expedição mantém a sua própria
+autorização vigente.
+
+| Alteração forçada | Teste que falhou |
+|---|---|
+| Índice parcial retirado do script | `ExpedicaoIT.aceitaUmaUnicaAutorizacaoVigentePorExpedicaoNoPostgres` |
+| Limpeza global (`lo_unlink` sem filtro) de volta ao script | `ObjetosGrandesIT.recriarOEsquemaPreservaObjetosGrandesDeForaDaAplicacao` |
 
 ## Conferido sem ajuste
 
