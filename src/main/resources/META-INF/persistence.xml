@@ -5,6 +5,7 @@
              version="3.0">
     <persistence-unit name="turmalinaPU" transaction-type="RESOURCE_LOCAL">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+        <mapping-file>META-INF/orm.xml</mapping-file>
         <class>br.edu.ifpb.pweb3.turmalina.dominio.Caverna</class>
         <class>br.edu.ifpb.pweb3.turmalina.dominio.Setor</class>
         <class>br.edu.ifpb.pweb3.turmalina.dominio.Pessoa</class>

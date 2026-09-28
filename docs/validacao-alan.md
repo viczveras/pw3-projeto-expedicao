@@ -11,6 +11,8 @@ incorporados dessa referência etapa por etapa, e não recriados do zero; cada e
 | 1 | Relatório técnico (`relatorio-tecnico.md`) | Afirmações sobre o que já existe conferidas contra o código da `main`; trechos que citavam arquivos, classes ou medições ainda inexistentes foram ajustados (abaixo) |
 | 2 | `Expedicao`, `PlanoSeguranca`, `AutorizacaoAmbiental` e `Participacao`, junto com as entidades de coleta, amostra, relatório final e movimentação | Com as 14 entidades o esquema é criado sem erro no PostgreSQL; `./mvnw -B -Pintegracao verify`: 47 testes sem banco e 18 com PostgreSQL aprovados |
 | 2 | `ExpedicaoTest` (15 testes) e `ExpedicaoIT` (6 testes) | `./mvnw -B -Pintegracao verify`: 62 testes sem banco e 24 com PostgreSQL aprovados; cada regra foi conferida também com uma falha forçada (abaixo) |
+| 3 | `orm.xml` com 8 consultas nomeadas, `<mapping-file>` no `persistence.xml` e os DTOs | O `EntityManagerFactory` de todos os testes com banco sobe com as 8 consultas validadas pelo Hibernate; 70 testes sem banco e 27 com PostgreSQL aprovados |
+| 3 | `ExpedicaoConsultas`, `ArquivoConsultas` e `ExpedicaoConsultasIT` (6 testes) | Contagem de comandos SQL de cada caso (abaixo); 70 testes sem banco e 33 com PostgreSQL aprovados |
 
 ## Ajustes no relatório de referência
 
@@ -64,6 +66,27 @@ restaurado em seguida:
 
 Ficam para as próximas etapas: a autorização vigente única no banco (índice parcial do `pos-criacao.sql`), a troca
 de plano rejeitada que desfaz o vínculo antigo (L01) e a remoção de setor com coleta (L02).
+
+## Consultas de expedição e downloads
+
+`ExpedicaoConsultasIT` mede, com `Statistics.getPrepareStatementCount()`, quantos comandos SQL cada consulta executa:
+
+| Caso | Comandos | Verificado também |
+|---|---|---|
+| 1. Listar expedições por período e situação (projeção `ExpedicaoResumo`) | 1 | filtro de período e de situação, ordem por início, nenhuma entidade no contexto |
+| 1b. Anti-exemplo: carregar as expedições e ler o nome da caverna | 1 + 2 | uma consulta extra por caverna distinta (N+1) |
+| 2. Detalhes da expedição com participantes e papéis | 2 | caverna e setores carregados; plano, autorizações e participações não carregados |
+| 6. Mapa de rota, PDF da autorização vigente, PDF por id, arquivo do relatório e fotografia da amostra | 1 cada | nenhuma entidade no contexto; `Optional.empty` quando o arquivo não existe |
+
+Falhas forçadas, com o código restaurado em seguida:
+
+| Alteração forçada | Teste que falhou |
+|---|---|
+| `join fetch e.caverna` retirado de `Expedicao.buscarComCavernaESetores` | `ExpedicaoConsultasIT.carregaDetalhesComParticipantesEmDuasConsultasSemArquivos` |
+| Mapa de rota lido navegando pela expedição em vez da consulta nomeada | `ExpedicaoConsultasIT.baixaCadaArquivoSeparadamenteComUmaConsultaSemCarregarEntidades` (3 comandos em vez de 1) |
+
+Observação: a listagem de participantes ordena por `papel`. Como o enum é gravado como texto (`EnumType.STRING`),
+a ordem é a alfabética do valor gravado (`APOIO_TECNICO`, `COORDENADOR`, `GUIA`...), e não a ordem de declaração.
 
 ## Conferido sem ajuste
 

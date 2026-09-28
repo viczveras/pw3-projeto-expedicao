@@ -12,9 +12,9 @@ completo está em [diagrama-classes.md](diagrama-classes.md).
 
 Nenhum conceito do enunciado foi omitido.
 
-As decisões deste relatório valem para o modelo completo, e as 14 entidades já estão implementadas. As
-consultas, o `orm.xml` e o `pos-criacao.sql` entram nas próximas etapas, e este relatório é atualizado junto
-com eles.
+As decisões deste relatório valem para o modelo completo. As 14 entidades, o `orm.xml` e as consultas de
+expedição e de arquivos já estão implementados. As consultas de coletas e de equipamentos e o
+`pos-criacao.sql` entram nas próximas etapas, e este relatório é atualizado junto com eles.
 
 ## 2. Herança: `InheritanceType.JOINED`
 
@@ -110,9 +110,10 @@ mapeamento.
 | 5 | Equipamentos disponíveis numa faixa de datas | `NOT EXISTS` sobre movimentações, resolvido no banco com índice | 1 |
 | 6 | Baixar mapa, autorização ou relatório | `select p.mapaRota ...` / `select a.arquivoPdf ...` / `select r.arquivo ...`: só a coluna do LOB | 1 cada |
 
-A demonstração vai executar cada caso com `Configuracao.propriedadesDaDemonstracao()`, que liga
-`hibernate.show_sql` e as estatísticas do Hibernate. O número de comandos SQL de cada caso vem de
-`Statistics.getPrepareStatementCount()`.
+A contagem dos casos 1, 1b, 2 e 6 é conferida em `ExpedicaoConsultasIT` com
+`Statistics.getPrepareStatementCount()`, que também confirma que as projeções e os downloads não colocam
+nenhuma entidade no contexto de persistência. A demonstração vai executar cada caso com
+`Configuracao.propriedadesDaDemonstracao()`, que liga `hibernate.show_sql` e as estatísticas do Hibernate.
 
 ### Consultas nomeadas externalizadas (`orm.xml`)
 
