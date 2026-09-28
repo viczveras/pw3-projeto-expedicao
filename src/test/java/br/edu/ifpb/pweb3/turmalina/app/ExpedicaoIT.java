@@ -167,6 +167,31 @@ class ExpedicaoIT extends IntegracaoPostgres {
     }
 
     @Test
+    void aceitaUmaUnicaAutorizacaoVigentePorExpedicaoNoPostgres() {
+        Long[] ids = transacao(em -> {
+            Expedicao expedicao = novaExpedicao(em, 5);
+            expedicao.registrarAutorizacao(novaAutorizacao(SituacaoAutorizacao.VIGENTE));
+            AutorizacaoAmbiental emAnalise = expedicao.registrarAutorizacao(
+                    novaAutorizacao(SituacaoAutorizacao.EM_ANALISE));
+            novaExpedicao(em, 5).registrarAutorizacao(novaAutorizacao(SituacaoAutorizacao.VIGENTE));
+            em.flush();
+            return new Long[]{expedicao.getId(), emAnalise.getId()};
+        });
+
+        PersistenceException erro = assertThrows(PersistenceException.class, () -> transacao(em -> {
+            em.find(AutorizacaoAmbiental.class, ids[1]).setSituacao(SituacaoAutorizacao.VIGENTE);
+            return null;
+        }));
+
+        exigirSqlState(erro, "23505");
+        transacao(em -> {
+            assertEquals(1L, ((Number) valorNativo(em, "select count(*) from {h-schema}autorizacao_ambiental "
+                    + "where expedicao_id = ? and situacao = 'VIGENTE'", ids[0])).longValue());
+            return null;
+        });
+    }
+
+    @Test
     void naoCarregaArquivosBinariosJuntoComAExpedicao() {
         Long id = transacao(em -> {
             Expedicao expedicao = novaExpedicao(em, 5);
@@ -227,8 +252,12 @@ class ExpedicaoIT extends IntegracaoPostgres {
     }
 
     private AutorizacaoAmbiental novaAutorizacao() {
+        return novaAutorizacao(SituacaoAutorizacao.VIGENTE);
+    }
+
+    private AutorizacaoAmbiental novaAutorizacao(SituacaoAutorizacao situacao) {
         return new AutorizacaoAmbiental("AUT-" + UUID.randomUUID().toString().substring(0, 20), "ICMBio",
-                LocalDate.of(2026, 9, 1), LocalDate.of(2026, 12, 31), SituacaoAutorizacao.VIGENTE, PDF);
+                LocalDate.of(2026, 9, 1), LocalDate.of(2026, 12, 31), situacao, PDF);
     }
 
     private Object valorNativo(EntityManager em, String sql, Long id) {

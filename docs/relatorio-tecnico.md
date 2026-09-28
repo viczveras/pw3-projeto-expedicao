@@ -12,9 +12,9 @@ completo está em [diagrama-classes.md](diagrama-classes.md).
 
 Nenhum conceito do enunciado foi omitido.
 
-As decisões deste relatório valem para o modelo completo. As 14 entidades, o `orm.xml` e as consultas de
-expedição e de arquivos já estão implementados. As consultas de coletas e de equipamentos e o
-`pos-criacao.sql` entram nas próximas etapas, e este relatório é atualizado junto com eles.
+As decisões deste relatório valem para o modelo completo. As 14 entidades, o `orm.xml`, as consultas de
+expedição e de arquivos e o `pos-criacao.sql` já estão implementados. As consultas de coletas e de
+equipamentos entram nas próximas etapas, e este relatório é atualizado junto com elas.
 
 ## 2. Herança: `InheritanceType.JOINED`
 
@@ -151,9 +151,11 @@ O SQL gerado em cada caso, com a contagem de comandos e o resultado, será regis
   verificação de sobreposição independente de fuso.
 - **Binários:** `@Lob byte[]`. No PostgreSQL, o Hibernate 6 mapeia para `oid` (Large Object), sem Base64
   no domínio. Para não deixar objetos grandes (LOs) órfãos, o `pos-criacao.sql` instala a extensão `lo`
-  e gatilhos `lo_manage`, que removem o LO quando a linha é apagada ou o arquivo é substituído. A
-  limpeza dos LOs que sobram de uma recriação do esquema deve alcançar só os objetos da aplicação, e
-  é definida junto com o script.
+  e gatilhos `lo_manage`, que removem o LO quando a linha é apagada ou o arquivo é substituído. O script
+  não apaga objetos grandes em massa: recriar o esquema apaga as tabelas sem disparar os gatilhos, e os LOs
+  dessas linhas ficam órfãos. Eles são removidos com `vacuumlo`, ferramenta do PostgreSQL que só apaga os
+  LOs que nenhuma coluna do banco referencia (por exemplo,
+  `docker compose exec postgres vacuumlo -U turmalina turmalina`).
 - **Unicidade:** CPF, e-mail, código ambiental da caverna, código da expedição, código patrimonial,
   código de campo da amostra, registro do pesquisador, credenciamento do guia, (caverna, denominação do
   setor), (órgão, número da autorização), (expedição, pessoa) na participação, e as FKs 1:1 da expedição.
