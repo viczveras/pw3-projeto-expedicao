@@ -175,3 +175,24 @@ o anti-exemplo 1b (entidades com acesso LAZY à caverna: 1 + N comandos).
 - **Restrição fora das anotações:** o índice único parcial `uk_autorizacao_vigente_por_expedicao`
   (`WHERE situacao = 'VIGENTE'`) não é expressável em JPA e fica no `pos-criacao.sql`, executado depois
   da criação das tabelas.
+
+## 8. Decisões de domínio
+
+Três pontos não são resolvidos só pelo enunciado. A equipe decidiu cada um e manteve o código coerente com a
+decisão:
+
+- **D01, equipamento aguardando calibração:** equipamentos `EM_MANUTENCAO`, `BAIXADO` ou
+  `AGUARDANDO_CALIBRACAO` não aparecem como disponíveis (`Equipamento.listarDisponiveisNoPeriodo`). Um
+  instrumento sem calibração compromete a medição científica e a segurança da equipe. Detalhes em
+  [evidencias-sql.md](evidencias-sql.md).
+- **D02, anexos obrigatórios:** o PDF assinado da autorização e o arquivo do relatório final são obrigatórios
+  (`nullable = false` e exigidos no construtor), porque a autorização só vale com o documento assinado e o
+  relatório final é o próprio arquivo. O mapa de rota e a fotografia da amostra são opcionais: o plano e a
+  amostra são registrados antes de esses arquivos existirem, e uma amostra pode não ser fotografada em campo.
+  Quando o arquivo não existe, o download devolve `Optional.empty`.
+- **D03, registro da coleta:** `registrarColeta` exige que a coleta ocorra em um setor abrangido pela
+  expedição, mas não exige que o pesquisador responsável esteja entre os participantes nem que a expedição
+  esteja `EM_ANDAMENTO`. O enunciado pede apenas um pesquisador responsável (seção 7), que pode ser de fora da
+  equipe de campo, e o registro não depende da situação da expedição, para que as coletas possam ser lançadas
+  a partir dos registros de campo mesmo depois da conclusão. A regra que o enunciado impõe continua garantida:
+  a coleta ocorre em setor abrangido, e a expedição não deixa de abranger um setor com coleta.

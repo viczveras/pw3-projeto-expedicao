@@ -18,6 +18,7 @@ incorporados dessa referência etapa por etapa, e não recriados do zero; cada e
 | 4 | Correção da L01 em `definirPlanoSeguranca` e `anexarRelatorioFinal` | Testes de reprodução em `ExpedicaoTest` falharam antes da correção e passaram depois (abaixo); `ExpedicaoIT` confirma a remoção do plano antigo por `orphanRemoval`; 73 testes sem banco e 45 com PostgreSQL aprovados |
 | 4 | Correção da L02 em `deixarDeAbrangerSetor` | Teste de reprodução em `ExpedicaoTest` falhou antes da correção; `ExpedicaoIT` confirma a regra a partir do banco; 74 testes sem banco e 46 com PostgreSQL aprovados |
 | 4 | Revisão final de `relatorio-tecnico.md` | Cada afirmação conferida contra o código e as evidências: 12 consultas JPQL e 2 nativas no `orm.xml`, contagem de comandos de `evidencias-sql.md`, console e roteiro de consultas ao vivo |
+| 4 | Decisões D01, D02 e D03 (seção 8 do relatório) | Comportamento do código conferido e mantido: filtro de disponibilidade em `EquipamentoConsultas`, `nullable` e construtores dos quatro arquivos binários, regras de `registrarColeta`; nenhum teste alterado |
 
 ## Ajustes no relatório de referência
 
