@@ -37,7 +37,7 @@ docker compose --profile test up -d --wait postgres-test
 
 O perfil `integracao` executa também as classes `*IT` contra o banco de testes (porta 5435, dados em memória). Cada classe herda de `IntegracaoPostgres`, que cria um esquema próprio, gera as tabelas a partir dos mapeamentos e o remove ao final. Os testes cobrem:
 
-- cavernas: persistência em cascata, carregamento sob demanda dos setores, código ambiental único, profundidade negativa rejeitada e remoção de setor órfão;
+- cavernas: persistência em cascata, carregamento sob demanda dos setores, código ambiental único, profundidade negativa rejeitada, remoção de setor órfão e recusa de remover setor com coleta ou abrangido por expedição;
 - pessoas: tabelas da herança JOINED com discriminador, consulta polimórfica, igualdade entre proxy e subtipo, CPF, e-mail e registro únicos, bolsa negativa rejeitada e tipos nativos do PostgreSQL (`boolean`, `date`, `numeric`);
 - script pós-criação: executado no esquema do teste depois das tabelas, com índice único parcial aplicado pelo banco.
 
@@ -118,7 +118,6 @@ Cada etapa deve compilar e passar nas verificações disponíveis antes do commi
 
 ## Entregas seguintes de Victor
 
-1. Revisar a remoção de setores e sua interação com as expedições e coletas (falha L02, com Alan e Ícaro).
-2. Atualizar o README final da entrega.
+1. Atualizar o README final da entrega.
 
 As funcionalidades completas presentes no setup não devem ser confundidas com o que já foi incorporado aqui. As lacunas identificadas na revisão do setup precisam de testes e correções durante a implementação.

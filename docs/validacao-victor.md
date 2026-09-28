@@ -15,6 +15,13 @@ Data: 27/09/2026. Referência: setup no commit `84b288071bab8af9867a789b1d681e8c
 | 7 | Diagrama de classes completo, registrado antes das partes de Alan e Ícaro | Atributos, tipos e valores dos enums das 16 classes conferidos por script contra o código de referência do setup |
 | 8 | Recriação do esquema com script pós-criação (testes e demonstração) e configuração da demonstração | Sem `currentSchema`, o script falhou com `relation "setor" does not exist`; com o ajuste, `./mvnw -B -Pintegracao verify`: 45 + 15 testes aprovados |
 | 9 | Console de consultas ao vivo (`ConsoleConsultas`, perfil Maven `console`) e busca do `public` nos testes | Sessão roteirizada de 11 comandos no banco de testes sem erro; `./mvnw -B -Pintegracao verify`: 70 + 40 testes aprovados com o banco de testes limpo e com a extensão `lo` já instalada no `public` |
+| 10 | Remoção de setor em uso (`RemocaoSetorIT`, com os dados de exemplo) | Setor com coleta recusado por `fk_coleta_setor` e setor abrangido por expedição recusado por `fk_expedicao_setor_setor` (23503), com setor e coleta preservados; setor livre removido; `./mvnw -B -Pintegracao verify`: 70 + 43 testes aprovados |
+
+## Remoção de setor em uso
+
+`Caverna.removerSetor` retira o setor da coleção, e `orphanRemoval` apaga a linha. O setor não conhece as coletas nem as expedições que o referenciam, então a caverna não tem como verificar o uso sem consultar o banco. A proteção fica nas chaves estrangeiras, sem exclusão em cascata: remover um setor com coleta ou abrangido por uma expedição falha com violação de chave estrangeira (23503) e a transação é desfeita, preservando o setor e as coletas. Um setor sem uso continua sendo removido normalmente.
+
+`RemocaoSetorIT` verifica os três casos sobre os dados de exemplo. A regra correspondente do lado da expedição, impedir `deixarDeAbrangerSetor` enquanto houver coleta no setor (falha L02), é do agregado `Expedicao`.
 
 ## Console de consultas
 
