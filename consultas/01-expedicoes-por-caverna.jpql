@@ -1,0 +1,8 @@
+select c.nomeOficial as caverna,
+       count(e) as expedicoes,
+       sum(e.orcamentoAprovado) as orcamento,
+       sum(e.custoRealizado) as custo
+from Expedicao e
+join e.caverna c
+group by c.nomeOficial
+order by expedicoes desc;

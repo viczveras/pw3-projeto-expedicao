@@ -94,4 +94,34 @@ class EquipamentoIT extends IntegracaoPostgres {
 
         exigirSqlState(ex, "23514");
     }
+
+    @Test
+    void naoDeveListarEquipamentoAguardandoCalibracao() {
+        Equipamento eq = new Equipamento(
+            "PAT-CALIB-01",
+            "Sonda de Teste",
+            TipoEquipamento.MEDICAO_AMBIENTAL,
+            "Marca X",
+            new java.math.BigDecimal("1000.00"),
+            java.time.LocalDate.now(),
+            true
+        );
+        eq.setSituacaoOperacional(br.edu.ifpb.pweb3.turmalina.dominio.enums.SituacaoOperacional.AGUARDANDO_CALIBRACAO);
+
+        transacao(em -> {
+            em.persist(eq);
+            return null;
+        });
+
+        java.time.Instant inicio = java.time.Instant.now();
+        java.util.List<Equipamento> disponiveis = transacao(em -> 
+            new br.edu.ifpb.pweb3.turmalina.consulta.EquipamentoConsultas(em)
+                .listarDisponiveis(inicio, inicio.plus(java.time.Duration.ofDays(7)))
+        );
+
+        org.junit.jupiter.api.Assertions.assertTrue(
+            disponiveis.stream().noneMatch(e -> "PAT-CALIB-01".equals(e.getCodigoPatrimonial())),
+            "O equipamento aguardando calibração não deveria aparecer na lista de disponíveis"
+        );
+    }
 }

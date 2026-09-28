@@ -1,0 +1,3 @@
+select type(p) as tipo, count(p) as total
+from Pessoa p
+group by type(p);

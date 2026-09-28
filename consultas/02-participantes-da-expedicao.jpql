@@ -1,0 +1,8 @@
+select pe.nome as participante,
+       p.papel as papel,
+       p.valorDiaria * p.quantidadeDiasPrevistos as custoPrevisto,
+       p.presencaConfirmada as presenca
+from Participacao p
+join p.pessoa pe
+where p.expedicao.codigo = :codigo
+order by custoPrevisto desc;
