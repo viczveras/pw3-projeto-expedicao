@@ -5,10 +5,12 @@ spring:
     url: ${TURMALINA_DB_URL:jdbc:postgresql://localhost:5434/turmalina}
     username: ${TURMALINA_DB_USER:turmalina}
     password: ${TURMALINA_DB_PASSWORD:turmalina}
+  web:
+    locale: pt_BR
+    locale-resolver: fixed
   data:
     web:
       pageable:
-        # Page<...> serializado como {content, page:{size, number, totalElements, totalPages}}.
         serialization-mode: via-dto
         default-page-size: 20
   jpa:
@@ -16,7 +18,6 @@ spring:
     hibernate:
       ddl-auto: update
       naming:
-        # Mesmas estratégias do persistence.xml da etapa 1, para o esquema não mudar.
         physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
         implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl
     properties:

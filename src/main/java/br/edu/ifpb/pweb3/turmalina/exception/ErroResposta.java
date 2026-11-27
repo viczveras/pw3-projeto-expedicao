@@ -6,16 +6,6 @@ import org.springframework.http.HttpStatusCode;
 import java.time.Instant;
 import java.util.List;
 
-/**
- * Corpo JSON único de todas as respostas de erro da API, inclusive 401 e 403.
- *
- * @param instante momento do erro
- * @param status   código HTTP
- * @param erro     frase padrão do código HTTP (ex.: "Not Found")
- * @param mensagem explicação para quem consome a API
- * @param caminho  caminho da requisição
- * @param campos   campos rejeitados; vazio quando o erro não é de validação
- */
 public record ErroResposta(Instant instante, int status, String erro, String mensagem, String caminho,
                            List<CampoInvalido> campos) {
 

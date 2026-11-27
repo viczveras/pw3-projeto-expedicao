@@ -71,6 +71,14 @@ public class Caverna extends EntidadeBase {
         this.acessoPermitido = true;
     }
 
+    public void atualizarCadastro(String nomeOficial, String codigoCadastroAmbiental, String municipio,
+                                  UnidadeFederativa uf) {
+        this.nomeOficial = Objects.requireNonNull(nomeOficial);
+        this.codigoCadastroAmbiental = Objects.requireNonNull(codigoCadastroAmbiental);
+        this.municipio = Objects.requireNonNull(municipio);
+        this.uf = Objects.requireNonNull(uf);
+    }
+
     public Setor adicionarSetor(Setor setor) {
         Objects.requireNonNull(setor, "setor");
         if (setores.stream().anyMatch(existente -> mesmaEntidade(existente, setor))) {
