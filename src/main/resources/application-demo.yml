@@ -1,0 +1,14 @@
+# Perfil da demonstração: recria o esquema, aplica o script pós-criação e mostra o SQL com os parâmetros.
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create
+    properties:
+      jakarta:
+        persistence:
+          sql-load-script-source: META-INF/sql/pos-criacao.sql
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE

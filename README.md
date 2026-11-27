@@ -10,7 +10,7 @@ Equipe: Victor Véras, Alan Borba e Ícaro Pontes.
 |---|---|
 | Diagrama de classes UML | [docs/diagrama-classes.md](docs/diagrama-classes.md) |
 | Entidades, enumerações e tipos incorporáveis | `src/main/java/br/edu/ifpb/pweb3/turmalina/dominio/` |
-| Unidade de persistência e dependências | `src/main/resources/META-INF/persistence.xml` e `pom.xml` |
+| Unidade de persistência e dependências | `src/main/resources/application.yml` e `pom.xml` (o `persistence.xml` da etapa 1 ficou em `src/test/resources/META-INF/`, usado pelos testes com PostgreSQL) |
 | Consultas JPA | `src/main/resources/META-INF/orm.xml` e `src/main/java/br/edu/ifpb/pweb3/turmalina/consulta/` |
 | SQL gerado pelas consultas | [docs/evidencias-sql.md](docs/evidencias-sql.md) |
 | Relatório técnico (herança, dono das associações, cascatas, orphanRemoval e carregamento) | [docs/relatorio-tecnico.md](docs/relatorio-tecnico.md) |
@@ -18,10 +18,12 @@ Equipe: Victor Véras, Alan Borba e Ícaro Pontes.
 ## Tecnologias
 
 - Java 21
-- Jakarta Persistence 3.1 com Hibernate ORM 6.6.4
+- Spring Boot 3.5 (Spring Web, Spring Data JPA e Bean Validation)
+- Jakarta Persistence 3.1 com Hibernate ORM 6.6
+- springdoc-openapi 2.8 e MapStruct 1.6
 - PostgreSQL 17
 - Maven 3.9.9, baixado automaticamente pelo Maven Wrapper
-- JUnit 5.11
+- JUnit 5
 - Docker Compose e GitHub Actions
 
 ## Modelo
@@ -53,7 +55,7 @@ As listagens usam projeções e `join fetch` para buscar apenas o necessário, e
 
 ### Consultas nomeadas no `orm.xml`
 
-As consultas do sistema, executadas pelas classes do pacote `consulta`, estão registradas em `src/main/resources/META-INF/orm.xml`, com o cabeçalho da JPA 3.1, e nenhuma está em anotações nas entidades. São 14 consultas nomeadas: 12 em JPQL e 2 em SQL nativo. As nativas usam recursos do PostgreSQL que a JPQL não oferece: um ranking de pesquisadores com `dense_rank()` e um resumo financeiro por caverna com `count(...) filter (where ...)`. O arquivo é declarado no `persistence.xml` com `<mapping-file>`.
+As consultas do sistema, executadas pelas classes do pacote `consulta`, estão registradas em `src/main/resources/META-INF/orm.xml`, com o cabeçalho da JPA 3.1, e nenhuma está em anotações nas entidades. São 14 consultas nomeadas: 12 em JPQL e 2 em SQL nativo. As nativas usam recursos do PostgreSQL que a JPQL não oferece: um ranking de pesquisadores com `dense_rank()` e um resumo financeiro por caverna com `count(...) filter (where ...)`. O Spring Boot carrega o `META-INF/orm.xml` automaticamente na subida, e o `persistence.xml` usado pelos testes o declara com `<mapping-file>`.
 
 ## Como executar
 
@@ -74,58 +76,28 @@ docker compose --profile test up -d --wait postgres-test
 
 São 120 testes: 74 sem banco e 46 com PostgreSQL. Cada classe de teste com banco cria um esquema próprio e o remove ao final. O GitHub Actions executa os mesmos testes a cada push e pull request.
 
-### Demonstração
+### Executar a aplicação
 
 ```bash
 docker compose up -d --wait postgres
-./mvnw -q -Pdemonstracao compile exec:java
+./mvnw spring-boot:run
 ```
 
-A demonstração recria o esquema, carrega os dados de exemplo e executa os seis casos do enunciado, mostrando o resultado, o SQL gerado e a quantidade de comandos de cada consulta. **Ela apaga os dados do banco configurado.**
+Sobe a aplicação em `http://localhost:8080`, ligada ao banco de desenvolvimento. Sem apagar dados, as tabelas são criadas ou atualizadas conforme o modelo. A documentação OpenAPI fica em `/swagger-ui.html` e `/v3/api-docs`. Para usar outra porta: `./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=8081`. O mesmo pode ser feito dentro de um contêiner com `docker compose --profile app up --build app` (porta definida por `TURMALINA_APP_PORT`).
 
-### Console de consultas
+O perfil `demo` recria o esquema, aplica o script pós-criação e mostra no log o SQL gerado com os parâmetros. **Ele apaga os dados do banco configurado.**
 
 ```bash
-docker compose up -d --wait postgres
-./mvnw -q -Pconsole compile exec:java
+./mvnw spring-boot:run -Dspring-boot.run.profiles=demo
 ```
 
-O console executa consultas no banco sem recompilar o projeto. Na primeira execução, se as tabelas não existirem, ele cria o esquema e carrega os dados de exemplo.
-
-| Comando | O que faz |
-|---|---|
-| `<JPQL>;` | executa uma consulta JPQL (pode ocupar várias linhas e termina com `;`) |
-| `:sql <comando>;` | executa um comando SQL do PostgreSQL |
-| `:consultas` | lista as consultas nomeadas do `orm.xml` e seus parâmetros |
-| `:ver <nome>` | mostra o texto de uma consulta nomeada |
-| `:x <nome> [parâmetro=valor ...]` | executa uma consulta nomeada; os parâmetros que faltarem são perguntados |
-| `:arquivos` e `:a <arquivo>` | listam e executam as consultas da pasta `consultas/` |
-| `:mostrarsql on` ou `off` | mostra ou esconde o SQL gerado pelo Hibernate |
-| `:pagina <n> [tamanho]` | pagina as próximas consultas |
-| `:recriar` | recria o esquema e recarrega os dados de exemplo (**apaga os dados**) |
-| `:ajuda` e `:sair` | listam os comandos e encerram o console |
-
-Os parâmetros aceitam datas (`2026-08-10`), data e hora (`2026-08-10T07:00`), `agora` e `agora+7d`, enumerações pelo nome (`CONCLUIDA`), listas separadas por vírgula (`PLANEJADA,CONCLUIDA`) e entidades pelo id. Exemplo:
-
-```
-:x Coleta.listarPorExpedicaoComSetorEPesquisador expedicaoId=1
-```
-
-Um roteiro de consultas para a apresentação está em [docs/consultas-ao-vivo.md](docs/consultas-ao-vivo.md).
-
-### Verificar a conexão
-
-```bash
-./mvnw -q compile exec:java
-```
-
-Conecta ao banco de desenvolvimento, confere os mapeamentos e mostra quantas cavernas, setores e pessoas existem. Sem apagar dados, as tabelas são criadas ou atualizadas conforme o modelo. O mesmo pode ser feito dentro de um contêiner com `docker compose run --rm --build app`.
+A demonstração e o console de consultas da etapa 1 continuam disponíveis na tag `etapa-1`.
 
 ### Bancos e configuração
 
 | Banco | Endereço | Uso |
 |---|---|---|
-| Desenvolvimento | `localhost:5434`, base `turmalina` | aplicação, demonstração e console; os dados ficam no volume `dados-postgres` |
+| Desenvolvimento | `localhost:5434`, base `turmalina` | aplicação e perfil `demo`; os dados ficam no volume `dados-postgres` |
 | Testes | `localhost:5435`, base `turmalina_test` | testes com PostgreSQL; os dados ficam só na memória do contêiner |
 
 Para mudar portas e credenciais do Docker Compose, copie `.env.example` para `.env`. Nas execuções locais, a conexão pode ser trocada pelas variáveis `TURMALINA_DB_URL`, `TURMALINA_DB_USER` e `TURMALINA_DB_PASSWORD`. Para desligar os bancos, use `docker compose --profile test down`.
@@ -134,18 +106,24 @@ Para mudar portas e credenciais do Docker Compose, copie `.env.example` para `.e
 
 ```
 src/main/java/br/edu/ifpb/pweb3/turmalina/
+├── TurmalinaApplication.java  classe principal do Spring Boot
 ├── dominio/            entidades e a classe base EntidadeBase
 │   ├── enums/          enumerações
 │   └── valor/          tipos incorporáveis (Localizacao e Endereco)
 ├── consulta/           classes que executam as consultas nomeadas
 │   └── dto/            projeções usadas nas listagens
-└── app/                configuração, demonstração, console e dados de exemplo
-src/main/resources/META-INF/
-├── persistence.xml     unidade de persistência turmalinaPU
-├── orm.xml             consultas nomeadas
-└── sql/pos-criacao.sql regras criadas depois do esquema
+├── controller/ service/ repository/ dto/ mapper/ exception/ security/ config/
+│                       camadas da API REST
+└── app/                dados de exemplo
+src/main/resources/
+├── application.yml     conexão e configuração do JPA
+├── application-demo.yml perfil demo
+└── META-INF/
+    ├── orm.xml         consultas nomeadas
+    └── sql/pos-criacao.sql regras criadas depois do esquema
 src/test/java/          testes sem banco (*Test) e com PostgreSQL (*IT)
-consultas/              consultas em arquivo, executadas pelo console
+src/test/resources/META-INF/persistence.xml  unidade turmalinaPU usada pelos *IT
+consultas/              consultas em arquivo (console da etapa 1)
 docs/                   diagramas, relatório, evidências e roteiros
 ```
 

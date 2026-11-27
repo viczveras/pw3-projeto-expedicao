@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: turmalina-pb
+  datasource:
+    url: ${TURMALINA_DB_URL:jdbc:postgresql://localhost:5434/turmalina}
+    username: ${TURMALINA_DB_USER:turmalina}
+    password: ${TURMALINA_DB_PASSWORD:turmalina}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+      naming:
+        # Mesmas estratégias do persistence.xml da etapa 1, para o esquema não mudar.
+        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl
+    properties:
+      hibernate:
+        hbm2ddl:
+          halt_on_error: true
+        jdbc:
+          time_zone: UTC
+        format_sql: true
