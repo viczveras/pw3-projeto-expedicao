@@ -5,6 +5,9 @@ spring:
     url: ${TURMALINA_DB_URL:jdbc:postgresql://localhost:5434/turmalina}
     username: ${TURMALINA_DB_USER:turmalina}
     password: ${TURMALINA_DB_PASSWORD:turmalina}
+  web:
+    locale: pt_BR
+    locale-resolver: fixed
   data:
     web:
       pageable:
