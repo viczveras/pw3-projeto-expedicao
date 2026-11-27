@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,7 @@ import org.springframework.web.multipart.support.MissingServletRequestPartExcept
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -63,7 +65,9 @@ public class TratadorGlobalDeErros {
                 .map(erro -> new CampoInvalido(erro.getField(), erro.getDefaultMessage()));
         Stream<CampoInvalido> deObjeto = e.getBindingResult().getGlobalErrors().stream()
                 .map(erro -> new CampoInvalido(erro.getObjectName(), erro.getDefaultMessage()));
-        List<CampoInvalido> campos = Stream.concat(deCampo, deObjeto).toList();
+        List<CampoInvalido> campos = Stream.concat(deCampo, deObjeto)
+                .sorted(Comparator.comparing(CampoInvalido::campo).thenComparing(CampoInvalido::mensagem))
+                .toList();
         return responder(HttpStatus.BAD_REQUEST, "Há campos inválidos na requisição.", requisicao, campos);
     }
 
@@ -89,6 +93,12 @@ public class TratadorGlobalDeErros {
                 : ((MissingServletRequestPartException) e).getRequestPartName();
         return responder(HttpStatus.BAD_REQUEST, "O parâmetro obrigatório '%s' não foi enviado.".formatted(nome),
                 requisicao);
+    }
+
+    @ExceptionHandler(PropertyReferenceException.class)
+    ResponseEntity<ErroResposta> ordenacaoInvalida(PropertyReferenceException e, HttpServletRequest requisicao) {
+        String mensagem = "Não é possível ordenar pela propriedade '%s'.".formatted(e.getPropertyName());
+        return responder(HttpStatus.BAD_REQUEST, mensagem, requisicao);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
