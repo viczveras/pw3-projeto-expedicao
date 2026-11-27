@@ -31,14 +31,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * Converte as exceções lançadas pelos controladores no corpo {@link ErroResposta}.
- *
- * <p>Atenção ao integrar o Spring Security: o handler genérico de {@link Exception} captura também a
- * {@code AccessDeniedException} lançada pelo {@code @PreAuthorize}, o que transformaria o 403 em 500.
- * O PR de segurança deve acrescentar aqui um handler específico para {@code AccessDeniedException}
- * (403) e {@code AuthenticationException} (401), que o Spring escolhe antes do genérico.</p>
- */
 @RestControllerAdvice
 public class TratadorGlobalDeErros {
 
@@ -132,7 +124,6 @@ public class TratadorGlobalDeErros {
 
     @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
     ResponseEntity<Void> formatoNaoAceito() {
-        // O cliente não aceita JSON, então a resposta vai sem corpo (um ErroResposta também não seria aceito).
         return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).build();
     }
 
@@ -151,7 +142,6 @@ public class TratadorGlobalDeErros {
     @ExceptionHandler(Exception.class)
     ResponseEntity<ErroResposta> inesperado(Exception e, HttpServletRequest requisicao) {
         if (e instanceof ErrorResponse respostaDoSpring) {
-            // Demais exceções do Spring MVC já trazem o status certo; não são erro do servidor.
             HttpStatusCode status = respostaDoSpring.getStatusCode();
             return responder(status, "A requisição não pôde ser atendida.", requisicao);
         }
