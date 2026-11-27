@@ -7,7 +7,7 @@ import br.edu.ifpb.pweb3.turmalina.service.CavernaService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
+import org.springframework.data.web.SortDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,7 +42,7 @@ public class CavernaController {
     }
 
     @GetMapping
-    public Page<CavernaResumo> listar(@PageableDefault(sort = "nomeOficial") Pageable paginacao) {
+    public Page<CavernaResumo> listar(@SortDefault("nomeOficial") Pageable paginacao) {
         return servico.listar(paginacao);
     }
 
