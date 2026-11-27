@@ -5,6 +5,12 @@ spring:
     url: ${TURMALINA_DB_URL:jdbc:postgresql://localhost:5434/turmalina}
     username: ${TURMALINA_DB_USER:turmalina}
     password: ${TURMALINA_DB_PASSWORD:turmalina}
+  data:
+    web:
+      pageable:
+        # Page<...> serializado como {content, page:{size, number, totalElements, totalPages}}.
+        serialization-mode: via-dto
+        default-page-size: 20
   jpa:
     open-in-view: false
     hibernate:
